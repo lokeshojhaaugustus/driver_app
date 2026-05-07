@@ -1,3 +1,4 @@
+import 'package:driver_app/state/AppState.dart';
 import 'package:driver_app/state/DriverState.dart';
 import 'package:driver_app/state/DriverStateManager.dart';
 import 'package:flutter/material.dart';
@@ -25,6 +26,14 @@ class _OnlineOfflineToggleState extends State<OnlineOfflineToggle> {
   //   });
   // }
 
+  void toggleStatus(bool value) {
+    if (value) {
+      DriverStateManager().goOnline();
+    } else {
+      DriverStateManager().goOffline();
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -51,10 +60,14 @@ class _OnlineOfflineToggleState extends State<OnlineOfflineToggle> {
               ),
               Switch(
                 value: isOnline,
-                onChanged: (value) {
-                  DriverStateManager().setState(
-                    value ? DriverState.online : DriverState.offline,
-                  );
+                onChanged: AppState.currentTrip != null 
+                  ? null 
+                  : (value) {
+                  if (value) {
+                    DriverStateManager().goOnline();
+                  } else {
+                    DriverStateManager().goOffline();
+                  }
                 },
               )
             ],

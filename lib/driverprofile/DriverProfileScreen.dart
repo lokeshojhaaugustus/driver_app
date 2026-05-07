@@ -21,9 +21,9 @@ class DriverProfileScreen extends StatelessWidget {
             height: 10,
           ),
           DriverDetailButton(),
-          SizedBox(
-            height: 10,
-          ),
+          // SizedBox(
+          //   height: 10,
+          // ),
           DriverStatsSection(),
           SizedBox(
             height: 10,

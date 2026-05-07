@@ -15,7 +15,7 @@ class RideDetailsHeader extends StatelessWidget {
     return Column(
       children: [
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 100),
+          padding: EdgeInsets.only(top:50),
           child: Row(
             children: [
               IconButton(
@@ -25,7 +25,7 @@ class RideDetailsHeader extends StatelessWidget {
               Text(
                 "Ride Details",
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 26,
                   fontWeight: FontWeight.w600
                 ),
               )
@@ -33,7 +33,7 @@ class RideDetailsHeader extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: EdgeInsets.all(12),
+          padding: EdgeInsets.fromLTRB(12, 0, 12, 12),
           child: Ridedetailscard(rideRequest: rideRequest), 
         )
       ],

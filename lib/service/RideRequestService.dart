@@ -17,4 +17,6 @@ class RideRequestService{
   static void rejectRide(RideRequest rideRequest){
     RideRequestMockData.rideRequests.remove(rideRequest);
   }
+
+  
 }

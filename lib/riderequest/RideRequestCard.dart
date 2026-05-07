@@ -1,5 +1,8 @@
+import 'package:driver_app/data/DriverMockData.dart';
 import 'package:driver_app/model/RideRequest.dart';
 import 'package:driver_app/ridedetails/RideDetailsScreen.dart';
+import 'package:driver_app/service/RideRequestService.dart';
+import 'package:driver_app/service/TripService.dart';
 import 'package:flutter/material.dart';
 
 class RideRequestCard extends StatelessWidget {
@@ -19,12 +22,29 @@ class RideRequestCard extends StatelessWidget {
   Widget build(BuildContext context) {
     
     return GestureDetector(
-      onTap: (){
-        Navigator.of(context).push(
+      onTap: () async {
+        final result = await Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => RideDetailsScreen(rideRequest: rideRequest)
-          )
+            builder: (_) => RideDetailsScreen(
+              rideRequest: rideRequest,
+              onReject: () {
+                RideRequestService.rejectRide(rideRequest);
+                Navigator.pop(context, true); // RETURN VALUE
+              },
+              onAccept: (){
+                final driver=DriverMockData.drivers.first;
+                TripService.createTrip(rideRequest, driver);
+                RideRequestService.acceptRide(rideRequest);
+                Navigator.of(context).pop();
+              },
+            ),
+          ),
         );
+
+        // AFTER COMING BACK
+        if (result == true) {
+          onReject(); // reuse existing logic (with setState)
+        }
       },
       child: Container(
         margin: EdgeInsets.symmetric(

@@ -14,7 +14,7 @@ class DriverStatsSection extends StatelessWidget {
         physics: NeverScrollableScrollPhysics(),
         mainAxisSpacing: 10,
         crossAxisSpacing: 10,
-        childAspectRatio: 1.2,
+        childAspectRatio: 1.35,
         children: [
           DriverStatCard(icon: Icons.local_taxi, value: "128", lable: "Trips"),
           DriverStatCard(icon: Icons.route, value: "1200 Km", lable: "Kilometers"),

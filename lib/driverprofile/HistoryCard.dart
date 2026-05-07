@@ -4,6 +4,7 @@ import 'package:driver_app/history/HistoryScreen.dart';
 import 'package:driver_app/model/DriverStats.dart';
 import 'package:driver_app/model/RideRequest.dart';
 import 'package:driver_app/model/Trip.dart';
+import 'package:driver_app/service/TripService.dart';
 import 'package:flutter/material.dart';
 
 class HistoryCard extends StatelessWidget {
@@ -19,6 +20,7 @@ class HistoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    List<Trip> driverTrips=TripService.getTripsByDriverId(1);
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -26,7 +28,7 @@ class HistoryCard extends StatelessWidget {
           MaterialPageRoute(
             builder: (_) => HistoryScreen(
               driverStats: DriverStatsMockData.driverStats[0],
-              trips: TripMockData.trips,
+              trips: driverTrips,
             ),
           ),
         );

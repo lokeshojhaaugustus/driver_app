@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:driver_app/state/DriverState.dart';
 
-class DriverStateManager extends ChangeNotifier{
+class DriverStateManager extends ChangeNotifier {
 
-  static final DriverStateManager _instance=DriverStateManager._internal();
+  static final DriverStateManager _instance =
+      DriverStateManager._internal();
 
-  factory DriverStateManager() {
-    return _instance;
-  }
+  factory DriverStateManager() => _instance;
 
   DriverStateManager._internal();
 
@@ -15,10 +14,24 @@ class DriverStateManager extends ChangeNotifier{
 
   DriverState get state => _state;
 
-  void setState(DriverState newState) {
-    _state = newState;
+  // online
+  void goOnline() {
+    _state = DriverState.online;
     notifyListeners();
   }
 
+  //offline
+  void goOffline() {
+    _state = DriverState.offline;
+    notifyListeners();
+  }
 
+  
+  void toggle() {
+    if (_state == DriverState.online) {
+      goOffline();
+    } else {
+      goOnline();
+    }
+  }
 }

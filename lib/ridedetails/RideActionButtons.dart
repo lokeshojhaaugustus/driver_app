@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 
 class RideActionButtons extends StatelessWidget {
-  const RideActionButtons({super.key});
+
+  final VoidCallback onReject;
+  final VoidCallback onAccept;
+  const RideActionButtons({
+    super.key,
+    required this.onReject,
+    required this.onAccept
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +22,7 @@ class RideActionButtons extends StatelessWidget {
                 backgroundColor: Colors.red,
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
-              onPressed: () {},
+              onPressed: onReject,
               child: const Text("Reject"),
             ),
           ),
@@ -26,7 +33,7 @@ class RideActionButtons extends StatelessWidget {
                 backgroundColor: Colors.green,
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
-              onPressed: () {},
+              onPressed: onAccept,
               child: const Text("Accept"),
             ),
           ),

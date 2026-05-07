@@ -7,6 +7,7 @@ class TripMockData{
 
   static RideRequest rideRequest1=RideRequestMockData.rideRequests[0];
   static RideRequest rideRequest2=RideRequestMockData.rideRequests[1];
+  static RideRequest rideRequest3=RideRequestMockData.rideRequests[2];
 
   static List<Trip> trips=[
     Trip(
@@ -34,6 +35,20 @@ class TripMockData{
       eta: rideRequest2.eta, 
       amount: rideRequest2.amount, 
       distance: rideRequest2.distance, 
+      startTime: DateTime.now(),
+    ),
+
+    Trip(
+      tripId: 3, 
+      rideRequest: rideRequest3, 
+      driver: DriverMockData.drivers[0], 
+      pickupAddress: rideRequest3.pickupAddress, 
+      pickupLocation: rideRequest3.pickupLocation, 
+      dropAddress: rideRequest3.dropAddress, 
+      dropLocation: rideRequest3.dropLocation, 
+      eta: rideRequest3.eta, 
+      amount: rideRequest3.amount, 
+      distance: rideRequest3.distance, 
       startTime: DateTime.now(),
     )
   ];

@@ -31,6 +31,16 @@ class RideRequestMockData{
       amount: 20000, 
       distance: 1500
     ),
+    RideRequest(
+      rideRequestId: 3, 
+      pickupAddress: pick1, 
+      pickupLocation: pick1.city, 
+      dropAddress: drop2, 
+      dropLocation: drop2.city, 
+      eta: 400, 
+      amount: 30000, 
+      distance: 1200
+    )
 
   ];
 

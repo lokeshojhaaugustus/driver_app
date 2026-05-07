@@ -8,10 +8,14 @@ import 'RideActionButtons.dart';
 class RideDetailsScreen extends StatelessWidget {
 
   final RideRequest rideRequest;
+  final VoidCallback onReject;
+  final VoidCallback onAccept;
 
   const RideDetailsScreen({
     super.key,
-    required this.rideRequest
+    required this.rideRequest,
+    required this.onReject,
+    required this.onAccept
   });
 
   @override
@@ -35,7 +39,10 @@ class RideDetailsScreen extends StatelessWidget {
           ),
 
           // Buttons
-          const RideActionButtons(),
+          RideActionButtons(
+            onReject: onReject,
+            onAccept: onAccept
+          ),
         ],
       ),
     );

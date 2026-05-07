@@ -2,6 +2,7 @@ import 'package:driver_app/data/TripMockData.dart';
 import 'package:driver_app/model/Driver.dart';
 import 'package:driver_app/model/RideRequest.dart';
 import 'package:driver_app/model/Trip.dart';
+import 'package:driver_app/state/AppState.dart';
 import 'package:driver_app/state/TripState.dart';
 
 class TripService{
@@ -27,6 +28,7 @@ class TripService{
     );
 
     _currentTrip = trip;
+    AppState.currentTrip=trip;
     TripMockData.trips.add(trip);
   }
 
@@ -47,6 +49,15 @@ class TripService{
       _currentTrip!.tripState = TripState.completed;
       _currentTrip!.endTime = DateTime.now();
       _currentTrip = null;
+      AppState.currentTrip=null;
     }
+  }
+
+  static List<Trip> getTripsByDriverId(int id){
+    List<Trip> driverTrips=TripMockData.trips
+      .where((t) => t.driver.driverId==id)
+      .toList();
+    
+    return driverTrips;
   }
 }
