@@ -1,47 +1,31 @@
-import 'package:driver_app/data/DriverMockData.dart';
+import 'package:driver_app/apiservice/DriverApiService.dart';
 import 'package:driver_app/model/Driver.dart';
+import 'package:driver_app/state/DriverState.dart';
 
 class DriverService{
 
-  static String add(Driver d){
-    List<Driver> drivers=DriverMockData.drivers;
-    String email=d.email;
-    String phone=d.phone;
-
-    for(Driver d in drivers){
-      if(d.email==email || d.phone==phone){
-        return "Driver Already Exist.";
-      }
-    }
-    drivers.add(d);
-    return "Driver Successfully Added.";
-
+  static Future<bool> addDriver(Driver driver){
+    final isAdded= DriverApiService.addDriver(driver);
+    return isAdded;
   }
   
-  static Driver? find(int id){
-    List<Driver> drivers=DriverMockData.drivers;
-    for(Driver d in drivers){
-      if(d.driverId==id) {
-        return d;
-      }
-    }
-    return null;
+  static Future<Driver?> find(int driverId){
+    final driver= DriverApiService.getDriverById(driverId);
+    return driver;
   }
 
-  static List<Driver> findAll(){
-    return DriverMockData.drivers;
+  static Future<List<Driver>> findAll(){
+    final response= DriverApiService.getDrivers();
+    return response;
   }
 
-  static String update(int driverId, Driver driver){
-    List<Driver> drivers=DriverMockData.drivers;
+  static Future<bool> updateDriverDetails(int driverId, Driver driver){
+    final response= DriverApiService.updateDriverDetails(driverId, driver);
+    return response;
+  }
 
-    for(int i=0;i<drivers.length;i++){
-      if(drivers[i].driverId==driverId){
-        drivers[i]=driver;
-        return "Updated Successfully.";
-      }
-    }
-
-    return "Driver Not Found.";
+  static Future<bool> updateDriverState(int driverId, DriverState driverState){
+    final response= DriverApiService.updateDriverState(driverId, driverState);
+    return response;
   }
 }

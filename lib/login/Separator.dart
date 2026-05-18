@@ -5,23 +5,15 @@ class Separator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-      return Row(
-          children: [
-            Expanded(
-              child: Divider(),
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: 10
-              ),
-              child: Text(
-                "OR"
-              ),
-            ),
-            Expanded(
-              child: Divider(),
-            )
-          ],
-        );
+    return Row(
+      children: [
+        Expanded(child: Divider()),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 10),
+          child: Text("OR"),
+        ),
+        Expanded(child: Divider()),
+      ],
+    );
   }
 }

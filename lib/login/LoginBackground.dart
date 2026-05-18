@@ -9,8 +9,8 @@ class LoginBackground extends StatelessWidget {
       decoration: const BoxDecoration(
         image: DecorationImage(
           image: AssetImage("assets/img/login.png"),
-          fit: BoxFit.cover
-        )
+          fit: BoxFit.cover,
+        ),
       ),
     );
   }

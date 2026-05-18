@@ -1,8 +1,11 @@
-import 'package:driver_app/data/DriverMockData.dart';
+
 import 'package:driver_app/model/RideRequest.dart';
+import 'package:driver_app/model/Trip.dart';
 import 'package:driver_app/ridedetails/RideDetailsScreen.dart';
+import 'package:driver_app/service/AppStateService.dart';
 import 'package:driver_app/service/RideRequestService.dart';
 import 'package:driver_app/service/TripService.dart';
+import 'package:driver_app/state/AppState.dart';
 import 'package:flutter/material.dart';
 
 class RideRequestCard extends StatelessWidget {
@@ -28,13 +31,26 @@ class RideRequestCard extends StatelessWidget {
             builder: (_) => RideDetailsScreen(
               rideRequest: rideRequest,
               onReject: () {
-                RideRequestService.rejectRide(rideRequest);
+                RideRequestService.rejectRideRequest(rideRequest.rideRequestId);
                 Navigator.pop(context, true); // RETURN VALUE
               },
               onAccept: (){
-                final driver=DriverMockData.drivers.first;
-                TripService.createTrip(rideRequest, driver);
-                RideRequestService.acceptRide(rideRequest);
+                final driver=AppStateService.getCurrentDriver();
+                Trip trip= Trip(
+                  tripId: 123, 
+                  rideRequest: rideRequest, 
+                  driver: driver!, 
+                  pickupAddress: rideRequest.pickupAddress, 
+                  pickupLocation: rideRequest.pickupLocation, 
+                  dropAddress: rideRequest.dropAddress, 
+                  dropLocation: rideRequest.dropLocation, 
+                  eta: rideRequest.eta, 
+                  amount: rideRequest.amount, 
+                  distance: rideRequest.distance, 
+                  startTime: DateTime.now()
+                );
+                TripService.addTrip(trip);
+                RideRequestService.acceptRideRequest(rideRequest.rideRequestId, driver!.driverId!);
                 Navigator.of(context).pop();
               },
             ),

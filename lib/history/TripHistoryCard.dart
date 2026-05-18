@@ -2,13 +2,9 @@ import 'package:driver_app/model/Trip.dart';
 import 'package:flutter/material.dart';
 
 class TripHistoryCard extends StatelessWidget {
-
   final Trip trip;
 
-  const TripHistoryCard({
-    super.key,
-    required this.trip,
-  });
+  const TripHistoryCard({super.key, required this.trip});
 
   @override
   Widget build(BuildContext context) {
@@ -21,32 +17,26 @@ class TripHistoryCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "${trip.pickupLocation} → ${trip.dropLocation}",
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  "${trip.pickupLocation} -> ${trip.dropLocation}",
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
-
                 const SizedBox(height: 5),
-
                 Text("${trip.distance} km"),
               ],
             ),
           ),
-
           Text(
-            "₹${trip.amount}",
+            "Rs ${trip.amount.toStringAsFixed(0)}",
             style: const TextStyle(
               color: Colors.green,
               fontWeight: FontWeight.bold,
             ),
-          )
+          ),
         ],
       ),
     );

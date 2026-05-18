@@ -8,7 +8,7 @@ class ProfileImageCard extends StatelessWidget {
     return Center(
       child: CircleAvatar(
         radius: 60,
-        backgroundImage: AssetImage("assets/img/defaultdriverpic.jpg"),
+        backgroundImage: AssetImage("assets/img/defaultdriverpic.JPG"),
       ),
     );
   }

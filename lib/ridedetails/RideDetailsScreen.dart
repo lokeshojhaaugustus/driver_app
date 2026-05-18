@@ -6,7 +6,6 @@ import 'RideDetailsHeader.dart';
 import 'RideActionButtons.dart';
 
 class RideDetailsScreen extends StatelessWidget {
-
   final RideRequest rideRequest;
   final VoidCallback onReject;
   final VoidCallback onAccept;
@@ -15,7 +14,7 @@ class RideDetailsScreen extends StatelessWidget {
     super.key,
     required this.rideRequest,
     required this.onReject,
-    required this.onAccept
+    required this.onAccept,
   });
 
   @override
@@ -32,17 +31,20 @@ class RideDetailsScreen extends StatelessWidget {
             child: Container(
               alignment: Alignment.center,
               child: RideRouteMap(
-                pickup: LatLng(rideRequest.pickupAddress.latitude, rideRequest.pickupAddress.longitude), 
-                drop: LatLng(rideRequest.dropAddress.latitude, rideRequest.dropAddress.longitude)
-              )
+                pickup: LatLng(
+                  rideRequest.pickupAddress.latitude,
+                  rideRequest.pickupAddress.longitude,
+                ),
+                drop: LatLng(
+                  rideRequest.dropAddress.latitude,
+                  rideRequest.dropAddress.longitude,
+                ),
+              ),
             ),
           ),
 
           // Buttons
-          RideActionButtons(
-            onReject: onReject,
-            onAccept: onAccept
-          ),
+          RideActionButtons(onReject: onReject, onAccept: onAccept),
         ],
       ),
     );

@@ -1,6 +1,1 @@
-enum TripState{
-  onPickup,
-  arrived,
-  onTrip,
-  completed
-}
+enum TripState { onPickup, arrived, onTrip, completed }

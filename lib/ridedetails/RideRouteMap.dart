@@ -4,29 +4,23 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 
-
 class RideRouteMap extends StatefulWidget {
-
   final LatLng pickup;
   final LatLng drop;
 
-  const RideRouteMap({
-    super.key,
-    required this.pickup,
-    required this.drop
-  });
+  const RideRouteMap({super.key, required this.pickup, required this.drop});
 
   @override
   State<RideRouteMap> createState() => _RideRouteMapState();
 }
 
 class _RideRouteMapState extends State<RideRouteMap> {
-  Set<Polyline> _polylines={};
+  final Set<Polyline> _polylines = {};
 
   @override
   void initState() {
     super.initState();
-    _fetchRoute(); 
+    _fetchRoute();
   }
 
   Future<void> _fetchRoute() async {
@@ -40,7 +34,6 @@ class _RideRouteMapState extends State<RideRouteMap> {
         "&key=$apiKey";
 
     final response = await http.get(Uri.parse(url));
-    print(response.body);
 
     if (response.statusCode != 200) return;
 
@@ -106,30 +99,15 @@ class _RideRouteMapState extends State<RideRouteMap> {
     return poly;
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     return GoogleMap(
-      initialCameraPosition: CameraPosition(
-        target: widget.pickup,
-        zoom: 12
-      ),
+      initialCameraPosition: CameraPosition(target: widget.pickup, zoom: 12),
       markers: {
-        Marker(
-          markerId: MarkerId("pickup"),
-          position: widget.pickup,
-        ),
-        Marker(
-          markerId: MarkerId("drop"),
-          position: widget.drop 
-        )
+        Marker(markerId: MarkerId("pickup"), position: widget.pickup),
+        Marker(markerId: MarkerId("drop"), position: widget.drop),
       },
       polylines: _polylines,
     );
   }
-
-
-
-
 }

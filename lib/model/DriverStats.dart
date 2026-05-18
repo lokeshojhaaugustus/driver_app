@@ -2,6 +2,7 @@ import 'package:driver_app/model/Driver.dart';
 
 class DriverStats{
 
+  int? driverStatsId;
   final Driver driver;
   int totalTrips;
   double totalEarning;
@@ -11,6 +12,7 @@ class DriverStats{
   int cancelledTrips;
 
   DriverStats({
+    this.driverStatsId,
     required this.driver,
     required this.totalTrips,
     required this.totalEarning,
@@ -19,5 +21,31 @@ class DriverStats{
     required this.completedTrips,
     required this.cancelledTrips
   });
+
+  Map<String, dynamic> toJson(){
+    return {
+      "driverStatsId": driverStatsId,
+      "driver": driver,
+      "totalTrips": totalTrips,
+      "totalEarning": totalEarning,
+      "totalDistance": totalDistance,
+      "avgRating": avgRating,
+      "completedTrips": completedTrips,
+      "cancelledTrips": cancelledTrips
+    };
+  }
+
+  factory DriverStats.fromJson(Map<String, dynamic> json){
+    return DriverStats(
+      driverStatsId: json["driverStatsId"],
+      driver: json["driver"], 
+      totalTrips: json["totalTrips"], 
+      totalEarning: json["totalEarning"], 
+      totalDistance: json["totalDistance"], 
+      avgRating: json["avgRating"], 
+      completedTrips: json["completedTrips"], 
+      cancelledTrips: json["cancelledTrips"]
+    );
+  }
 
 }

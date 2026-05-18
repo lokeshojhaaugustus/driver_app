@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 class DriverDetailItem extends StatelessWidget {
-
   final String label;
   final String value;
   final bool isEditing;
@@ -22,13 +21,9 @@ class DriverDetailItem extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.black54,
-            ),
+            style: const TextStyle(fontSize: 16, color: Colors.black54),
           ),
 
           const SizedBox(height: 5),
@@ -41,12 +36,7 @@ class DriverDetailItem extends StatelessWidget {
                     border: OutlineInputBorder(),
                   ),
                 )
-              : Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 16,
-                  ),
-                ),
+              : Text(value, style: const TextStyle(fontSize: 16)),
         ],
       ),
     );

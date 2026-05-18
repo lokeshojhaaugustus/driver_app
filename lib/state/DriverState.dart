@@ -1,6 +1,4 @@
 enum DriverState {
-
   offline,
   online,
-
 }

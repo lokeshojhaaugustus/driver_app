@@ -20,15 +20,10 @@ class DriverDetailButton extends StatelessWidget {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (_) => DriverDetailsScreen(),
-              ),
+              MaterialPageRoute(builder: (_) => DriverDetailsScreen()),
             );
           },
-          child: const Text(
-            "Driver Details",
-            style: TextStyle(fontSize: 18),
-          ),
+          child: const Text("Driver Details", style: TextStyle(fontSize: 18)),
         ),
       ),
     );

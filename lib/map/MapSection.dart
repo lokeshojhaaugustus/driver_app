@@ -1,4 +1,8 @@
+import 'dart:async';
+
+import 'package:driver_app/apiservice/DriverCurrentLocationApiService.dart';
 import 'package:driver_app/location/LocationService.dart';
+import 'package:driver_app/service/AppStateService.dart';
 import 'package:driver_app/service/MapService.dart';
 import 'package:driver_app/service/TripService.dart';
 import 'package:driver_app/state/AppState.dart';
@@ -18,10 +22,11 @@ class MapSection extends StatefulWidget {
 }
 
 class _MapSectionState extends State<MapSection> {
-
   bool _hasPermission = false;
+  bool _isCheckingPermission = true;
 
   GoogleMapController? _mapController;
+  StreamSubscription<Position>? _positionSubscription;
 
   LatLng? _currentPos;
 
@@ -34,48 +39,55 @@ class _MapSectionState extends State<MapSection> {
     _listenToLocation();
   }
 
-  void _listenToLocation() async {
+  @override
+  void dispose() {
+    _positionSubscription?.cancel();
+    super.dispose();
+  }
 
-    _hasPermission =
-        await LocationService.handlePermission();
+  void _listenToLocation() async {
+    _hasPermission = await LocationService.handlePermission();
+    _isCheckingPermission = false;
+
+    if (!mounted) return;
 
     if (!_hasPermission) {
-
       setState(() {});
 
       return;
     }
 
-    LocationService
-        .getLiveLocation()
-        .listen((Position position) {
+    _positionSubscription = LocationService.getLiveLocation().listen((
+      Position position,
+    ) {
+      if (!mounted) return;
 
-      final latLng = LatLng(
-        position.latitude,
-        position.longitude,
-      );
+      final latLng = LatLng(position.latitude, position.longitude);
 
       setState(() {
-
         _currentPos = latLng;
 
         AppState.currentDriverLocation = latLng;
       });
 
+      final driverId = AppState.currentDriver?.driverId;
+      if (driverId != null) {
+        DriverCurrentLocationApiService.updateLocation(
+          driverId: driverId,
+          location: latLng,
+        ).catchError((_) {});
+      }
+
       _updateRoute();
 
-      _mapController?.animateCamera(
-        CameraUpdate.newLatLng(latLng),
-      );
+      _mapController?.animateCamera(CameraUpdate.newLatLng(latLng));
     });
   }
 
   Future<void> _updateRoute() async {
-
-    final trip = TripService.currentTrip;
+    final trip = AppStateService.getCurrentTrip();
 
     if (trip == null || _currentPos == null) {
-
       setState(() {
         _polylines = {};
       });
@@ -87,25 +99,20 @@ class _MapSectionState extends State<MapSection> {
 
     // DRIVER -> PICKUP
     if (trip.tripState == TripState.onPickup) {
-
       destination = LatLng(
         trip.pickupAddress.latitude,
         trip.pickupAddress.longitude,
       );
     }
-
     // PICKUP -> DROP
     else if (trip.tripState == TripState.onTrip) {
-
       destination = LatLng(
         trip.dropAddress.latitude,
         trip.dropAddress.longitude,
       );
     }
-
     // ARRIVED / COMPLETED
     else {
-
       setState(() {
         _polylines = {};
       });
@@ -113,16 +120,15 @@ class _MapSectionState extends State<MapSection> {
       return;
     }
 
-    final routePoints =
-        await MapService.getRoutePoints(
-          origin: _currentPos!,
-          destination: destination,
-        );
+    final routePoints = await MapService.getRoutePoints(
+      origin: _currentPos!,
+      destination: destination,
+    );
+
+    if (!mounted) return;
 
     setState(() {
-
       _polylines = {
-
         Polyline(
           polylineId: const PolylineId("route"),
 
@@ -138,37 +144,27 @@ class _MapSectionState extends State<MapSection> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isCheckingPermission) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
     if (!_hasPermission) {
-
-      return const Center(
-        child: Text(
-          "Location permission denied",
-        ),
-      );
+      return const Center(child: Text("Location permission denied"));
     }
 
     if (_currentPos == null) {
-
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     return Stack(
       children: [
-
         _buildMap(),
 
         AnimatedBuilder(
-
           animation: DriverStateManager(),
 
           builder: (context, _) {
-
-            WidgetsBinding.instance
-                .addPostFrameCallback((_) {
-
+            WidgetsBinding.instance.addPostFrameCallback((_) {
               _updateRoute();
             });
 
@@ -180,20 +176,14 @@ class _MapSectionState extends State<MapSection> {
   }
 
   Widget _buildMap() {
-
     return GoogleMap(
-
-      initialCameraPosition: CameraPosition(
-        target: _currentPos!,
-        zoom: 15,
-      ),
+      initialCameraPosition: CameraPosition(target: _currentPos!, zoom: 15),
 
       myLocationEnabled: true,
 
       myLocationButtonEnabled: true,
 
       onMapCreated: (controller) {
-
         _mapController ??= controller;
       },
 
@@ -204,21 +194,14 @@ class _MapSectionState extends State<MapSection> {
   }
 
   Set<Marker> _buildMarkers() {
-
-    final trip = TripService.currentTrip;
+    final trip = AppStateService.getCurrentTrip();
 
     Set<Marker> markers = {};
 
     // DRIVER MARKER
     if (_currentPos != null) {
-
       markers.add(
-
-        Marker(
-          markerId: const MarkerId("driver"),
-
-          position: _currentPos!,
-        ),
+        Marker(markerId: const MarkerId("driver"), position: _currentPos!),
       );
     }
 
@@ -228,9 +211,7 @@ class _MapSectionState extends State<MapSection> {
 
     // PICKUP MARKER
     if (trip.tripState == TripState.onPickup) {
-
       markers.add(
-
         Marker(
           markerId: const MarkerId("pickup"),
 
@@ -244,9 +225,7 @@ class _MapSectionState extends State<MapSection> {
 
     // DROP MARKER
     if (trip.tripState == TripState.onTrip) {
-
       markers.add(
-
         Marker(
           markerId: const MarkerId("drop"),
 
@@ -262,37 +241,25 @@ class _MapSectionState extends State<MapSection> {
   }
 
   Widget _buildOverlayUI() {
+    final driverState = DriverStateManager().state;
 
-    final driverState =
-        DriverStateManager().state;
-
-    final trip =
-        TripService.currentTrip;
+    final trip = AppStateService.getCurrentTrip();
 
     // OFFLINE
     if (driverState == DriverState.offline) {
-
-      return Center(
-        child: Lottie.asset(
-          "assets/gif/offline.json",
-        ),
-      );
+      return Center(child: Lottie.asset("assets/gif/offline.lottie"));
     }
 
     // ONLINE + NO TRIP
     if (trip == null) {
-
       return const SizedBox();
     }
 
     switch (trip.tripState) {
-
       // GOING TO PICKUP
       case TripState.onPickup:
-
         return Column(
           children: [
-
             const Spacer(),
 
             Padding(
@@ -302,22 +269,19 @@ class _MapSectionState extends State<MapSection> {
                 width: double.infinity,
 
                 child: ElevatedButton(
-
-                  onPressed: () {
-
-                    TripService.arrivedAtPickup();
+                  onPressed: () async {
+                    await TripService.arrivedAtPickup(trip.tripId);
 
                     _polylines = {};
 
-                    DriverStateManager()
-                        .notifyListeners();
+                    DriverStateManager().refresh();
 
-                    setState(() {});
+                    if (mounted) {
+                      setState(() {});
+                    }
                   },
 
-                  child: const Text(
-                    "Reached Pickup",
-                  ),
+                  child: const Text("Reached Pickup"),
                 ),
               ),
             ),
@@ -326,10 +290,8 @@ class _MapSectionState extends State<MapSection> {
 
       // DRIVER ARRIVED
       case TripState.arrived:
-
         return Column(
           children: [
-
             const Spacer(),
 
             Padding(
@@ -339,22 +301,19 @@ class _MapSectionState extends State<MapSection> {
                 width: double.infinity,
 
                 child: ElevatedButton(
+                  onPressed: () async {
+                    await TripService.startTrip(trip.tripId);
 
-                  onPressed: () {
-
-                    TripService.startTrip();
-
-                    DriverStateManager()
-                        .notifyListeners();
+                    DriverStateManager().refresh();
 
                     _updateRoute();
 
-                    setState(() {});
+                    if (mounted) {
+                      setState(() {});
+                    }
                   },
 
-                  child: const Text(
-                    "Start Trip",
-                  ),
+                  child: const Text("Start Trip"),
                 ),
               ),
             ),
@@ -363,10 +322,8 @@ class _MapSectionState extends State<MapSection> {
 
       // ON TRIP
       case TripState.onTrip:
-
         return Column(
           children: [
-
             const Spacer(),
 
             Padding(
@@ -376,22 +333,19 @@ class _MapSectionState extends State<MapSection> {
                 width: double.infinity,
 
                 child: ElevatedButton(
-
-                  onPressed: () {
-
-                    TripService.endTrip();
+                  onPressed: () async {
+                    await TripService.endTrip(trip.tripId);
 
                     _polylines = {};
 
-                    DriverStateManager()
-                        .notifyListeners();
+                    DriverStateManager().refresh();
 
-                    setState(() {});
+                    if (mounted) {
+                      setState(() {});
+                    }
                   },
 
-                  child: const Text(
-                    "End Trip",
-                  ),
+                  child: const Text("End Trip"),
                 ),
               ),
             ),
@@ -400,7 +354,6 @@ class _MapSectionState extends State<MapSection> {
 
       // COMPLETED
       case TripState.completed:
-
         return const SizedBox();
     }
   }

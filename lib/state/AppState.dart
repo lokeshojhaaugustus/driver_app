@@ -10,6 +10,4 @@ class AppState{
   static Trip? currentTrip;
 
   static LatLng? currentDriverLocation;
-
-
 }

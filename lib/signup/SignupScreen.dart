@@ -11,31 +11,30 @@ class SignupScreen extends StatefulWidget {
 }
 
 class _SignupScreenState extends State<SignupScreen> {
-
-  final TextEditingController firstNameController=TextEditingController();
-  final TextEditingController lastNameController=TextEditingController();
-  final TextEditingController emailController=TextEditingController();
-  final TextEditingController phoneController=TextEditingController();
-  final TextEditingController passwordController=TextEditingController();
-  final TextEditingController licenceController=TextEditingController();
+  final TextEditingController firstNameController = TextEditingController();
+  final TextEditingController lastNameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController phoneController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController licenceController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: Stack(
-          children: [
-            SignupBackground(),
-            SignupText(),
-            SignupForm(
-              firstNameController: firstNameController, 
-              lastNameController: lastNameController, 
-              emailController: emailController, 
-              phoneController: phoneController, 
-              passwordController: passwordController, 
-              licenceController: licenceController
-            )
-          ],
-        ),
-      );
+      body: Stack(
+        children: [
+          SignupBackground(),
+          SignupText(),
+          SignupForm(
+            firstNameController: firstNameController,
+            lastNameController: lastNameController,
+            emailController: emailController,
+            phoneController: phoneController,
+            passwordController: passwordController,
+            licenceController: licenceController,
+          ),
+        ],
+      ),
+    );
   }
 }

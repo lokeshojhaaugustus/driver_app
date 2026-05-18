@@ -6,9 +6,9 @@ class LoginAppleButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ElevatedButton.icon(
-      onPressed: (){
-        print("Apple Login!");
-      }, 
+      onPressed: () {
+        debugPrint("Apple Login!");
+      },
       icon: const Icon(Icons.apple),
       label: const Text("Apple"),
     );

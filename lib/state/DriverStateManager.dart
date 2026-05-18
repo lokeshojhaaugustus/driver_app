@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:driver_app/state/DriverState.dart';
 
 class DriverStateManager extends ChangeNotifier {
-
-  static final DriverStateManager _instance =
-      DriverStateManager._internal();
+  static final DriverStateManager _instance = DriverStateManager._internal();
 
   factory DriverStateManager() => _instance;
 
@@ -26,7 +24,10 @@ class DriverStateManager extends ChangeNotifier {
     notifyListeners();
   }
 
-  
+  void refresh() {
+    notifyListeners();
+  }
+
   void toggle() {
     if (_state == DriverState.online) {
       goOffline();

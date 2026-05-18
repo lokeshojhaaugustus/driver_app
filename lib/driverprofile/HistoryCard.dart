@@ -1,34 +1,28 @@
-import 'package:driver_app/data/DriverStatsMockData.dart';
-import 'package:driver_app/data/TripMockData.dart';
 import 'package:driver_app/history/HistoryScreen.dart';
-import 'package:driver_app/model/DriverStats.dart';
-import 'package:driver_app/model/RideRequest.dart';
-import 'package:driver_app/model/Trip.dart';
-import 'package:driver_app/service/TripService.dart';
+import 'package:driver_app/model/Driver.dart';
 import 'package:flutter/material.dart';
 
 class HistoryCard extends StatelessWidget {
 
-  //final DriverStats driverStats;
-  //final List<Trip> trips;
+  final Driver driver;
 
   const HistoryCard({
     super.key,
-    //required this.driverStats,
-    //required this.trips,
+    required this.driver
   });
 
   @override
-  Widget build(BuildContext context) {
-    List<Trip> driverTrips=TripService.getTripsByDriverId(1);
+  Widget build(BuildContext context){
+    
     return GestureDetector(
       onTap: () {
+        final driverId=driver.driverId;
+        if(driverId==null) return;
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (_) => HistoryScreen(
-              driverStats: DriverStatsMockData.driverStats[0],
-              trips: driverTrips,
+              driverId: driverId,
             ),
           ),
         );

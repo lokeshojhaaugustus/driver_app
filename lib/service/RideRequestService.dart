@@ -1,22 +1,26 @@
-import 'package:driver_app/data/RideRequestMockData.dart';
+import 'package:driver_app/apiservice/RideRequestApiService.dart';
 import 'package:driver_app/model/RideRequest.dart';
-import 'package:driver_app/state/RideRequestState.dart';
+import 'package:driver_app/model/Trip.dart';
 
 class RideRequestService{
 
-  static List<RideRequest> getRideRequests(){
-    return RideRequestMockData.rideRequests
-      .where((r)=>r.rideRequestState==RideRequestState.pending)
-      .toList();
+  static Future<List<RideRequest>> getRideRequests(){
+    final rideRequests= RideRequestApiService.getRideRequests();
+    return rideRequests;
   }
 
-  static void acceptRide(RideRequest rideRequest){
-    rideRequest.rideRequestState=RideRequestState.accepted;
+  static Future<Trip?> acceptRideRequest(int rideRequestId, int driverId){
+    final trip= RideRequestApiService.acceptRideRequest(rideRequestId, driverId);
+    return trip;
   }
 
-  static void rejectRide(RideRequest rideRequest){
-    RideRequestMockData.rideRequests.remove(rideRequest);
+  static Future<bool> rejectRideRequest(int rideRequestId){
+    final response= RideRequestApiService.rejectRideRequest(rideRequestId);
+    return response;
   }
 
-  
+  static Future<bool> completeRideRequest(int rideRequestId){
+    final response= RideRequestApiService.completeRideRequest(rideRequestId);
+    return response;
+  }
 }

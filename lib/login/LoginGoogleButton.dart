@@ -6,11 +6,11 @@ class LoginGoogleButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ElevatedButton.icon(
-              onPressed: () {
-                print("Google Login!");
-              },
-              icon: const Icon(Icons.g_mobiledata, size: 28),
-              label: const Text("Google"),
+      onPressed: () {
+        debugPrint("Google Login!");
+      },
+      icon: const Icon(Icons.g_mobiledata, size: 28),
+      label: const Text("Google"),
     );
   }
 }

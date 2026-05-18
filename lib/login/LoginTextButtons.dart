@@ -9,26 +9,27 @@ class LoginTextBUttons extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
         TextButton(
-          onPressed: (
-            //
-          ){}, 
+          onPressed: () {
+            Navigator.of(context).pushNamed("/signup");
+          },
           child: Text(
             "Sign Up",
             style: TextStyle(
               color: Colors.blue.shade300,
               decoration: TextDecoration.underline,
             ),
-          )
+          ),
         ),
         TextButton(
-          onPressed: (){}, 
+          onPressed: () {},
           child: Text(
             "Forgot Password",
             style: TextStyle(
               color: Colors.blue.shade300,
               decoration: TextDecoration.underline,
             ),
-          ))
+          ),
+        ),
       ],
     );
   }

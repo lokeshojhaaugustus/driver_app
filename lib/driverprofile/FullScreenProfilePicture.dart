@@ -9,36 +9,29 @@ class FullScreenProfilePicture extends StatelessWidget {
       backgroundColor: Colors.transparent,
       body: Stack(
         children: [
-          Center(
-            child: Image.asset("assets/img/defaultdriverpic.jpg"),
-          ),
+          Center(child: Image.asset("assets/img/defaultdriverpic.JPG")),
           Positioned(
             bottom: 40,
             left: 20,
-            right:20,
+            right: 20,
             child: Row(
               children: [
                 Expanded(
-                  child: ElevatedButton(
-                    onPressed: (){}, 
-                    child: Text("Edit")
-                  )
+                  child: ElevatedButton(onPressed: () {}, child: Text("Edit")),
                 ),
-                SizedBox(
-                  width: 10
-                ),
+                SizedBox(width: 10),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: (){},
+                    onPressed: () {},
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red
+                      backgroundColor: Colors.red,
                     ),
-                    child: Text("Delete")
-                  )
-                )
+                    child: Text("Delete"),
+                  ),
+                ),
               ],
-            )
-          )
+            ),
+          ),
         ],
       ),
     );

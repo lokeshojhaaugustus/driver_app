@@ -78,7 +78,7 @@ flutter:
     - assets/gif/location.lottie
     - assets/gif/internet.json
     - assets/gif/location.json
-    - assets/img/defaultdriverpic.jpg
+    - assets/img/defaultdriverpic.JPG
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

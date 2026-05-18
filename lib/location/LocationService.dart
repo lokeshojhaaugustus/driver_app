@@ -1,9 +1,7 @@
 import 'package:geolocator/geolocator.dart';
 
-class LocationService{
-
+class LocationService {
   static Future<bool> handlePermission() async {
-
     LocationPermission permission = await Geolocator.checkPermission();
 
     if (permission == LocationPermission.denied) {
@@ -15,16 +13,15 @@ class LocationService{
     }
 
     return permission == LocationPermission.always ||
-           permission == LocationPermission.whileInUse;
+        permission == LocationPermission.whileInUse;
   }
 
-  static Stream<Position> getLiveLocation(){
+  static Stream<Position> getLiveLocation() {
     return Geolocator.getPositionStream(
       locationSettings: LocationSettings(
         accuracy: LocationAccuracy.high,
         distanceFilter: 10,
-      )
+      ),
     );
   }
-
 }

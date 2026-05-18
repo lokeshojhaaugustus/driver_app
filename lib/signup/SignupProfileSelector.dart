@@ -16,8 +16,8 @@ class _SignupProfileSelectorState extends State<SignupProfileSelector> {
           CircleAvatar(
             radius: 50,
             backgroundColor: Colors.grey.shade300,
-            backgroundImage: AssetImage("assets/img/defaultdriverpic.jpg"),
-          )
+            backgroundImage: AssetImage("assets/img/defaultdriverpic.JPG"),
+          ),
         ],
       ),
     );

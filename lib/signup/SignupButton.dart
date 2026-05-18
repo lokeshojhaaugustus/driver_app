@@ -1,21 +1,14 @@
 import 'package:flutter/material.dart';
 
 class SignupButton extends StatefulWidget {
-
   final VoidCallback onSignup;
-  const SignupButton({
-    super.key,
-    required this.onSignup
-  });
+  const SignupButton({super.key, required this.onSignup});
 
   @override
   State<SignupButton> createState() => _SignupButtonState();
 }
 
 class _SignupButtonState extends State<SignupButton> {
-
-  
-
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -26,7 +19,7 @@ class _SignupButtonState extends State<SignupButton> {
           style: TextStyle(
             fontSize: 25,
             fontWeight: FontWeight.w500,
-            color: Colors.grey.shade900
+            color: Colors.grey.shade900,
           ),
         ),
         CircleAvatar(
@@ -34,10 +27,10 @@ class _SignupButtonState extends State<SignupButton> {
           backgroundColor: Colors.grey.shade900,
           child: IconButton(
             color: Colors.white,
-            onPressed: widget.onSignup, 
+            onPressed: widget.onSignup,
             icon: Icon(Icons.arrow_forward_outlined),
           ),
-        )
+        ),
       ],
     );
   }

@@ -1,6 +1,7 @@
 import 'package:driver_app/driverdetails/DriverDetailItem.dart';
 import 'package:driver_app/driverdetails/LogoutButton.dart';
 import 'package:driver_app/driverdetails/ProfileImageCard.dart';
+import 'package:driver_app/service/SessionService.dart';
 import 'package:flutter/material.dart';
 
 
@@ -83,9 +84,10 @@ class _DriverDetailsScreenState extends State<DriverDetailsScreen> {
 
             const Spacer(),
 
-            // 🔴 LOGOUT
+            
             LogoutButton(
               onLogout: () {
+                SessionService.clearSession();
                 Navigator.popUntil(context, (route) => route.isFirst);
               },
             )

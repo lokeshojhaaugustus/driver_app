@@ -8,13 +8,10 @@ class LoginText extends StatelessWidget {
     return Positioned(
       top: 200,
       left: 30,
-      child: 
-        Text("Welcome!",
-          style: TextStyle(
-            fontSize: 40,
-            color: Colors.white,
-          ),
-        ),
+      child: Text(
+        "Welcome!",
+        style: TextStyle(fontSize: 40, color: Colors.white),
+      ),
     );
   }
 }

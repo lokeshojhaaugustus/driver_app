@@ -9,8 +9,8 @@ class SignupBackground extends StatelessWidget {
       decoration: BoxDecoration(
         image: DecorationImage(
           image: AssetImage("assets/img/register.png"),
-          fit: BoxFit.cover
-        )
+          fit: BoxFit.cover,
+        ),
       ),
     );
   }

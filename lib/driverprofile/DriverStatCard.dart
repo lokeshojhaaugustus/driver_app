@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 class DriverStatCard extends StatelessWidget {
-
   final IconData icon;
   final String value;
   final String lable;
@@ -10,12 +9,12 @@ class DriverStatCard extends StatelessWidget {
     super.key,
     required this.icon,
     required this.value,
-    required this.lable
+    required this.lable,
   });
 
   @override
   Widget build(BuildContext context) {
-    return  Container(
+    return Container(
       padding: EdgeInsets.all(15),
       decoration: BoxDecoration(
         color: Colors.grey.shade200,
@@ -24,18 +23,13 @@ class DriverStatCard extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon,size: 30),
-          SizedBox(
-            height: 10,
-          ),
+          Icon(icon, size: 30),
+          SizedBox(height: 10),
           Text(
             value,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
-          Text(lable)
+          Text(lable),
         ],
       ),
     );

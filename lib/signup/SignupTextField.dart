@@ -9,7 +9,7 @@ class SignupTextField extends StatefulWidget {
     super.key,
     required this.hint,
     required this.isPassword,
-    required this.controller
+    required this.controller,
   });
 
   @override
@@ -24,11 +24,9 @@ class _SignupTextFieldState extends State<SignupTextField> {
       obscureText: widget.isPassword,
       decoration: InputDecoration(
         fillColor: Colors.grey.shade100,
-        filled:true,
+        filled: true,
         hintText: widget.hint,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10)
-        )
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }

@@ -1,8 +1,12 @@
-import 'package:driver_app/data/DriverMockData.dart';
+import 'dart:convert';
+
+import 'package:driver_app/apiservice/DriverApiService.dart';
+import 'package:driver_app/model/Driver.dart';
 import 'package:driver_app/signup/SignupButton.dart';
 import 'package:driver_app/signup/SignupProfileSelector.dart';
 import 'package:driver_app/signup/SignupTextField.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 class SignupForm extends StatefulWidget {
   const SignupForm({
@@ -91,27 +95,49 @@ class _SignupFormState extends State<SignupForm> {
             height:10
           ),
           SignupButton(
-            onSignup: (){
-              final driver=DriverMockData.register(
+            onSignup: () async {
+
+              Driver driver=Driver( 
                 firstName: widget.firstNameController.text, 
                 lastName: widget.lastNameController.text, 
                 email: widget.emailController.text, 
                 phone: widget.phoneController.text, 
                 password: widget.passwordController.text, 
-                licence: widget.licenceController.text
+                licenceNumber: widget.licenceController.text
               );
 
-              if(driver==null){
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Email or Phone Already Exist!"))
-                );
-              }
-              else{
+              
+              final response=await DriverApiService.addDriver(driver);
+              if(response==true){
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text("Signup Successful!"))
                 );
                 Navigator.of(context).pushNamed("/login");
               }
+              else{
+                print("Something went wrong!");
+              }
+
+              // final driver=DriverMockData.register(
+              //   firstName: widget.firstNameController.text, 
+              //   lastName: widget.lastNameController.text, 
+              //   email: widget.emailController.text, 
+              //   phone: widget.phoneController.text, 
+              //   password: widget.passwordController.text, 
+              //   licence: widget.licenceController.text
+              // );
+
+              // if(driver==null){
+              //   ScaffoldMessenger.of(context).showSnackBar(
+              //     SnackBar(content: Text("Email or Phone Already Exist!"))
+              //   );
+              // }
+              // else{
+              //   ScaffoldMessenger.of(context).showSnackBar(
+              //     SnackBar(content: Text("Signup Successful!"))
+              //   );
+              //   Navigator.of(context).pushNamed("/login");
+              // }
             },
           )
         ],

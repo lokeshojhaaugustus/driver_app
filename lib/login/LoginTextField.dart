@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 class LoginTextField extends StatefulWidget {
-
   final String hint;
   final bool isPassword;
   final TextEditingController controller;
@@ -10,7 +9,7 @@ class LoginTextField extends StatefulWidget {
     super.key,
     required this.hint,
     required this.isPassword,
-    required this.controller
+    required this.controller,
   });
 
   @override
@@ -27,9 +26,7 @@ class _LoginTextFieldState extends State<LoginTextField> {
         fillColor: Colors.grey.shade100,
         filled: true,
         hintText: widget.hint,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-        )
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }

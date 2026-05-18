@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 
 class RideActionButtons extends StatelessWidget {
-
   final VoidCallback onReject;
   final VoidCallback onAccept;
   const RideActionButtons({
     super.key,
     required this.onReject,
-    required this.onAccept
+    required this.onAccept,
   });
 
   @override

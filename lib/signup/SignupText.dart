@@ -10,11 +10,8 @@ class SignupText extends StatelessWidget {
       left: 30,
       child: Text(
         "Sign Up!",
-        style: TextStyle(
-          fontSize: 40,
-          color: Colors.white
-        ),
-      )
+        style: TextStyle(fontSize: 40, color: Colors.white),
+      ),
     );
   }
 }

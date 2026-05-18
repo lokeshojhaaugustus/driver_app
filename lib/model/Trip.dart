@@ -40,4 +40,39 @@ class Trip{
     this.endTime,
   });
 
+  Map<String, dynamic> toJson(){
+    return {
+      "tripId": tripId,
+      "rideRequest": rideRequest,
+      "driver": driver,
+      "pickupAddres": pickupAddress,
+      "pickupLocation": pickupLocation,
+      "dropAddress": dropAddress,
+      "dropLocation": dropLocation,
+      "eta": eta,
+      "amount": amount,
+      "distance": distance,
+      "tripState": tripState,
+      "startTime": startTime,
+      "endTime": endTime
+    };
+  }
+
+  factory Trip.fromJson(Map<String, dynamic> json){
+    return Trip(
+      tripId: json["tripId"], 
+      rideRequest: json["rideRequest"], 
+      driver: json["driver"], 
+      pickupAddress: json["pickupAddress"], 
+      pickupLocation: json["pickupLocation"], 
+      dropAddress: json["dropAddress"], 
+      dropLocation: json["dropLocation"], 
+      eta: json["eta"], 
+      amount: json["amount"], 
+      distance: json["distance"], 
+      startTime: json["startTime"],
+      endTime: json["endTime"]
+    );
+  }
+
 }
