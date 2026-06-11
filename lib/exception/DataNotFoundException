@@ -1,0 +1,15 @@
+class DataNotFoundException implements Exception {
+
+    final String msg;
+    final int? statusCode;
+
+    DataNotFoundException({
+        required this.msg, 
+        this.statusCode
+    });
+
+    @override
+    String toString() {
+        return "DataNotFoundException: $msg (Status code: $statusCode)";
+    }
+}

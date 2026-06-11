@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:driver_app/apiservice/ApiConfig.dart';
 import 'package:driver_app/model/DriverStats.dart';
 import 'package:http/http.dart' as http;
 
@@ -7,7 +8,7 @@ class DriverStatsApiService{
 
   static Future<bool> addDriverStats(DriverStats driverStats) async{
     final response= await http.post(
-      Uri.parse("http://10.0.2.2:8080/driverstats/add"),
+      ApiConfig.uri("/driverstats/add"),
       headers: {
         "Content-Type" : "application/json"
       },
@@ -21,7 +22,7 @@ class DriverStatsApiService{
 
   static Future<DriverStats?> findDriverStats(int driverId) async{
     final response= await http.get(
-      Uri.parse("http://10.0.2.2:8080/driverstats/get/$driverId"),
+      ApiConfig.uri("/driverstats/get/$driverId"),
     );
     if(response.statusCode==200){
       return DriverStats.fromJson(jsonDecode(response.body));
@@ -31,7 +32,7 @@ class DriverStatsApiService{
 
   static Future<List<DriverStats>> findAllDriverStats() async{
     final response= await http.get(
-      Uri.parse("http://10.0.2.2:8080/driverstats/get/all"),
+      ApiConfig.uri("/driverstats/get/all"),
     );
     if(response.statusCode==200){
       List<dynamic> jsonList= jsonDecode(response.body);
@@ -45,7 +46,7 @@ class DriverStatsApiService{
 
   static Future<bool> updateDriverStats(int driverId, DriverStats driverStats) async{
     final response= await http.put(
-      Uri.parse("http://10.0.2.2:8080/driverstats/update/$driverId"),
+      ApiConfig.uri("/driverstats/update/$driverId"),
       headers: {
         "Content-Type" : "application/json"
       },

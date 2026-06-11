@@ -54,19 +54,27 @@ class DriverStatsSection extends StatelessWidget {
           DriverStatCard(
             icon: Icons.local_taxi,
             value: totalTrips,
-            lable: "Trips",
+            label: "Total Trips",
+            themeColor: Colors.indigoAccent,
           ),
           DriverStatCard(
             icon: Icons.route,
             value: "$totalDistance Km",
-            lable: "Kilometers",
+            label: "Distance",
+            themeColor: Colors.teal,
           ),
           DriverStatCard(
             icon: Icons.currency_rupee,
             value: totalEarning,
-            lable: "Earnings",
+            label: "Earnings",
+            themeColor: Colors.green,
           ),
-          DriverStatCard(icon: Icons.star, value: avgRating, lable: "Rating"),
+          DriverStatCard(
+            icon: Icons.star,
+            value: avgRating,
+            label: "Rating",
+            themeColor: Colors.amber,
+          ),
         ],
       ),
     );

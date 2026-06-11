@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'dart:io';
 import 'package:driver_app/apiservice/ApiConfig.dart';
 import 'package:driver_app/model/Trip.dart';
 import 'package:http/http.dart' as http;
@@ -78,6 +79,30 @@ class TripApiService {
 
   static Future<bool> completeTrip(int tripId) async {
     final response = await http.put(ApiConfig.uri("/trip/complete/$tripId"));
+    
+    print("🌐 Debug API Response: Status Code [${response.statusCode}] | Body: ${response.body}");
+
+    if (response.statusCode == 200) {
+      return true;
+    }
+    
+    if (response.statusCode == 400) {
+      try {
+        final Map<String, dynamic> errorBody = jsonDecode(response.body);
+        if (errorBody['error'] == 'DOCS_REQUIRED') {
+          throw const HttpException('DOCS_REQUIRED'); 
+        }
+      } catch (e) {
+        // If it's our target exception, rethrow it so the controller catches it
+        if (e is HttpException) rethrow; 
+      }
+    }
+    
+    return false;
+  }
+
+  static Future<bool> startRide(int tripId) async {
+    final response = await http.put(ApiConfig.uri("/trip/startride/$tripId"));
     return response.statusCode >= 200 && response.statusCode < 300;
   }
 }

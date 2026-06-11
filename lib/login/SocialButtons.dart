@@ -10,12 +10,15 @@ class SocialButtons extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        SizedBox(height: 10),
-        Separator(),
-        SizedBox(height: 10),
+        const SizedBox(height: 20),
+        const Separator(),
+        const SizedBox(height: 20),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [LoginGoogleButton(), LoginAppleButton()],
+          children: [
+            const Expanded(child: LoginGoogleButton()),
+            const SizedBox(width: 12),
+            const Expanded(child: LoginAppleButton()),
+          ],
         ),
       ],
     );

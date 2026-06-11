@@ -20,7 +20,7 @@ class Trip{
 
   TripState tripState;
 
-  final DateTime startTime;
+  final DateTime? startTime;
   DateTime? endTime;
 
   
@@ -36,42 +36,44 @@ class Trip{
     required this.amount,
     required this.distance,
     this.tripState=TripState.onPickup,
-    required this.startTime,
+    this.startTime,
     this.endTime,
   });
+
 
   Map<String, dynamic> toJson(){
     return {
       "tripId": tripId,
-      "rideRequest": rideRequest,
-      "driver": driver,
-      "pickupAddres": pickupAddress,
+      "rideRequest": rideRequest.toJson(),
+      "driver": driver.toJson(),
+      "pickupAddress": pickupAddress.toJson(),
       "pickupLocation": pickupLocation,
-      "dropAddress": dropAddress,
+      "dropAddress": dropAddress.toJson(),
       "dropLocation": dropLocation,
       "eta": eta,
       "amount": amount,
       "distance": distance,
-      "tripState": tripState,
-      "startTime": startTime,
-      "endTime": endTime
+      "tripState": tripState.name,
+      "startTime": startTime?.toIso8601String(),
+      "endTime": endTime?.toIso8601String()
     };
   }
 
   factory Trip.fromJson(Map<String, dynamic> json){
     return Trip(
       tripId: json["tripId"], 
-      rideRequest: json["rideRequest"], 
-      driver: json["driver"], 
-      pickupAddress: json["pickupAddress"], 
+      rideRequest: RideRequest.fromJson(json["rideRequest"]), 
+      driver: Driver.fromJson(json["driver"]), 
+      pickupAddress: Address.fromJson(json["pickupAddress"]), 
       pickupLocation: json["pickupLocation"], 
-      dropAddress: json["dropAddress"], 
+      dropAddress: Address.fromJson(json["dropAddress"]), 
       dropLocation: json["dropLocation"], 
       eta: json["eta"], 
-      amount: json["amount"], 
-      distance: json["distance"], 
-      startTime: json["startTime"],
-      endTime: json["endTime"]
+      amount: (json["amount"] as num).toDouble(), 
+      distance: (json["distance"] as num).toDouble(), 
+      startTime: json["startTime"] != null ? DateTime.parse(json["startTime"]) : null,
+      endTime: json["endTime"] != null ? DateTime.parse(json["endTime"]) : null,
+      tripState: TripState.values.firstWhere((e) => e.name == json["tripState"])
     );
   }
 

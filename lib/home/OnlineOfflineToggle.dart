@@ -1,60 +1,64 @@
-import 'package:driver_app/apiservice/DriverApiService.dart';
-import 'package:driver_app/model/Driver.dart';
-import 'package:driver_app/service/AppStateService.dart';
-import 'package:driver_app/service/DriverService.dart';
-import 'package:driver_app/state/AppState.dart';
+import 'package:driver_app/controller/DriverController.dart';
+import 'package:driver_app/controller/TripController.dart';
 import 'package:driver_app/state/DriverState.dart';
-import 'package:driver_app/state/DriverStateManager.dart';
+import 'package:driver_app/service/DriverService.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class OnlineOfflineToggle extends StatefulWidget {
+class OnlineOfflineToggle extends ConsumerStatefulWidget {
   const OnlineOfflineToggle({super.key});
 
   @override
-  State<OnlineOfflineToggle> createState() => _OnlineOfflineToggleState();
+  ConsumerState<OnlineOfflineToggle> createState() => _OnlineOfflineToggleState();
 }
 
-class _OnlineOfflineToggleState extends State<OnlineOfflineToggle> {
+class _OnlineOfflineToggleState extends ConsumerState<OnlineOfflineToggle> {
   bool _isUpdating = false;
 
-
   Future<void> toggleStatus(bool value) async {
-    Driver? driver = AppStateService.getCurrentDriver();
-
-    if (driver== null || driver.driverId==null) {
-      return;
-    }
-
     setState(() {
       _isUpdating = true;
     });
 
-    final nextState = value ? DriverState.online : DriverState.offline;
-
     try {
-      final success = await DriverService.updateDriverDetails(driver.driverId!, driver);
 
-      if (!mounted) return;
+      final success =
+          await ref
+              .read(driverControllerProvider.notifier)
+              .updateDriverState(
+                value
+                    ? DriverState.online
+                    : DriverState.offline,
+              );
 
-      if (success) {
-        driver.driverState = nextState;
-        if (value) {
-          DriverStateManager().goOnline();
-        } else {
-          DriverStateManager().goOffline();
-        }
-      } else {
+      if (!success && mounted) {
+
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Unable to update driver state")),
+          const SnackBar(
+            content: Text(
+              "Unable to update driver state",
+            ),
+          ),
         );
       }
+
     } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Unable to connect to backend")),
-      );
-    } finally {
+
       if (mounted) {
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              "Unable to connect to server",
+            ),
+          ),
+        );
+      }
+
+    } finally {
+
+      if (mounted) {
+
         setState(() {
           _isUpdating = false;
         });
@@ -64,34 +68,43 @@ class _OnlineOfflineToggleState extends State<OnlineOfflineToggle> {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: DriverStateManager(),
-      builder: (context, _) {
-        final isOnline = DriverStateManager().state == DriverState.online;
+    final driver = ref.watch(driverControllerProvider);
+    final isOnline = driver?.driverState == DriverState.online;
+    final currentTrip = ref.watch(tripControllerProvider);
 
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                isOnline ? "ONLINE" : "OFFLINE",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: isOnline ? Colors.green : Colors.grey,
-                ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: isOnline ? Colors.green.shade50 : Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(30),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 6.0, right: 2.0),
+            child: Text(
+              isOnline ? "ONLINE" : "OFFLINE",
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: isOnline ? Colors.green.shade700 : Colors.grey.shade600,
               ),
-              Switch(
-                value: isOnline,
-                onChanged: AppState.currentTrip != null || _isUpdating
-                    ? null
-                    : toggleStatus,
-              ),
-            ],
+            ),
           ),
-        );
-      },
+          Transform.scale(
+            scale: 0.85,
+            child: Switch.adaptive(
+              value: isOnline,
+              activeColor: Colors.green,
+              activeTrackColor: Colors.green.shade200,
+              inactiveThumbColor: Colors.grey.shade400,
+              inactiveTrackColor: Colors.grey.shade300,
+              onChanged: currentTrip != null || _isUpdating ? null : toggleStatus,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

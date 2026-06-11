@@ -28,28 +28,30 @@ class RideRequest {
   Map<String, dynamic> toJson(){
     return{
       "rideRequestId": rideRequestId,
-      "pickupAddress": pickupAddress,
+      "pickupAddress": pickupAddress.toJson(),
       "pickupLocation": pickupLocation,
-      "dropAddress": dropAddress,
+      "dropAddress": dropAddress.toJson(),
       "dropLocation": dropLocation,
       "eta": eta,
       "amount": amount,
       "distance": distance,
-      "rideRequestState": rideRequestState
+      "rideRequestState": rideRequestState.name
     };
   }
 
   factory RideRequest.fromJson(Map<String, dynamic> json){
     return RideRequest(
       rideRequestId: json["rideRequestId"], 
-      pickupAddress: json["pickupAddress"], 
+      pickupAddress: Address.fromJson(json["pickupAddress"]), 
       pickupLocation: json["pickupLocation"], 
-      dropAddress: json["dropAddress"], 
+      dropAddress: Address.fromJson(json["dropAddress"]), 
       dropLocation: json["dropLocation"], 
       eta: json["eta"], 
-      amount: json["amount"], 
-      distance: json["distance"],
-      rideRequestState: json["rideRequestState"] 
+      amount: (json["amount"] as num).toDouble(), 
+      distance: (json["distance"] as num).toDouble(),
+      rideRequestState: RideRequestState.values.firstWhere(
+        (state) => state.name==json["rideRequestState"]
+      ),
     );
   }
 }

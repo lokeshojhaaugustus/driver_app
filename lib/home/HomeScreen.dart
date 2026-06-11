@@ -1,78 +1,192 @@
+import 'package:driver_app/controller/DriverController.dart';
+
+import 'package:driver_app/controller/TripController.dart';
+
 import 'package:driver_app/home/HomeHeader.dart';
-import 'package:driver_app/home/OnlineOfflineToggle.dart';
-import 'package:driver_app/home/RideRequestList.dart';
-import 'package:driver_app/map/MapSection.dart';
-import 'package:driver_app/service/AppStateService.dart';
-import 'package:driver_app/service/TripService.dart';
-import 'package:driver_app/state/AppState.dart';
+
+import 'package:driver_app/home/OfflineScreen.dart';
+
+import 'package:driver_app/home/OnlineScreen.dart';
+
 import 'package:driver_app/state/DriverState.dart';
-import 'package:driver_app/state/DriverStateManager.dart';
+
 import 'package:flutter/material.dart';
 
-class HomeScreen extends StatefulWidget {
+import 'package:flutter/services.dart';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+
+
+class HomeScreen extends ConsumerStatefulWidget {
+
   const HomeScreen({super.key});
 
+
+
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+
   @override
+
   Widget build(BuildContext context) {
-    final driver = AppStateService.getCurrentDriver();
+
+    final driver = ref.watch(driverControllerProvider);
+
+
 
     if (driver == null) {
+
       WidgetsBinding.instance.addPostFrameCallback((_) {
+
         Navigator.of(context).pushReplacementNamed("/login");
+
       });
 
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+
+
+      return const Scaffold(
+
+        body: Center(
+
+          child: CircularProgressIndicator(),
+
+        ),
+
+      );
+
     }
 
-    return AnimatedBuilder(
-      animation: DriverStateManager(),
-      builder: (context, _) {
-        final isOnline = DriverStateManager().state == DriverState.online;
 
-        return Scaffold(
-          body: Column(
-            children: [
-              HomeHeader(
-                driver: driver,
-                onProfileClick: () {
-                  Navigator.of(context).pushNamed("/profile");
-                },
+
+    final isOnline = driver.driverState == DriverState.online;
+
+    final currentTrip = ref.watch(tripControllerProvider);
+
+
+
+    // Sync native system notification bar appearance smoothly
+
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+
+      statusBarColor: Colors.transparent,
+
+      statusBarIconBrightness: isOnline ? Brightness.dark : Brightness.light,
+
+      statusBarBrightness: isOnline ? Brightness.light : Brightness.dark,
+
+    ));
+
+
+
+    return Scaffold(
+
+      backgroundColor: const Color(0xFF0F172A),
+
+      body: Stack(
+
+        children: [
+
+          // -------------------------------------------------------------
+
+          // Dynamic Stack Layer Ordering
+
+          // -------------------------------------------------------------
+
+         
+
+          // Primary View: When online, OnlineScreen stands on top.
+
+          // When offline, it moves underneath OfflineScreen while remaining alive.
+
+          if (isOnline) ...[
+
+            Positioned.fill(
+
+              child: OnlineScreen(showRideRequests: currentTrip == null),
+
+            ),
+
+            const Positioned.fill(
+
+              child: Visibility(
+
+                visible: false,
+
+                maintainState: true, // Holds state initialization references alive
+
+                child: OfflineScreen(),
+
               ),
 
-              const SizedBox(height: 5),
+            ),
 
-              const OnlineOfflineToggle(),
+          ] else ...[
 
-              const SizedBox(height: 5),
+            Positioned.fill(
 
-              // MAP SECTION
-              if (isOnline)
-                const SizedBox(height: 300, child: MapSection())
-              else
-                SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.7,
-                  child: Center(
-                    //child: Lottie.asset("assets/gif/internet.json"),
-                    child: Text("Offline!"),
-                  ),
+              child: OnlineScreen(showRideRequests: currentTrip == null),
+
+            ),
+
+            const Positioned.fill(
+
+              child: OfflineScreen(), // Completely covers the Online view layers
+
+            ),
+
+          ],
+
+
+
+          // -------------------------------------------------------------
+
+          // Shared Interactive Navigation Header (Always Highest Z-Index)
+
+          // -------------------------------------------------------------
+
+          SafeArea(
+
+            child: Align(
+
+              alignment: Alignment.topCenter,
+
+              child: Padding(
+
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+
+                child: HomeHeader(
+
+                  driver: driver,
+
+                  onProfileClick: () {
+
+                    Navigator.of(context).pushNamed("/profile");
+
+                  },
+
                 ),
 
-              const SizedBox(height: 5),
+              ),
 
-              // RIDE REQUEST LIST
-              if (isOnline && AppStateService.getCurrentTrip == null)
-                const Expanded(child: RideRequestList())
-              else
-                const SizedBox(),
-            ],
+            ),
+
           ),
-        );
-      },
+
+        ],
+
+      ),
+
     );
+
   }
+
 }
+

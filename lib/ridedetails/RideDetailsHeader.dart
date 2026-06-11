@@ -8,28 +8,31 @@ class RideDetailsHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Padding(
-          padding: EdgeInsets.only(top: 50),
-          child: Row(
+    return Container(
+      color: Colors.grey[900], // Premium deep background
+      padding: const EdgeInsets.fromLTRB(4, 48, 16, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
               IconButton(
                 onPressed: () => Navigator.of(context).pop(),
-                icon: Icon(Icons.arrow_back),
+                icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
               ),
-              Text(
-                "Ride Details",
-                style: TextStyle(fontSize: 26, fontWeight: FontWeight.w600),
+              const Text(
+                "Trip Details",
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
               ),
             ],
           ),
-        ),
-        Padding(
-          padding: EdgeInsets.fromLTRB(12, 0, 12, 12),
-          child: Ridedetailscard(rideRequest: rideRequest),
-        ),
-      ],
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Ridedetailscard(rideRequest: rideRequest),
+          ),
+        ],
+      ),
     );
   }
 }

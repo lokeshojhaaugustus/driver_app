@@ -1,15 +1,8 @@
-
 import 'package:driver_app/model/RideRequest.dart';
-import 'package:driver_app/model/Trip.dart';
-import 'package:driver_app/ridedetails/RideDetailsScreen.dart';
-import 'package:driver_app/service/AppStateService.dart';
-import 'package:driver_app/service/RideRequestService.dart';
-import 'package:driver_app/service/TripService.dart';
-import 'package:driver_app/state/AppState.dart';
+import 'package:driver_app/ridedetails/RideDetailsScreen.dart'; // 1. Make sure to import your details screen here
 import 'package:flutter/material.dart';
 
 class RideRequestCard extends StatelessWidget {
-
   final VoidCallback onAccept;
   final VoidCallback onReject;
   final RideRequest rideRequest;
@@ -18,147 +11,142 @@ class RideRequestCard extends StatelessWidget {
     super.key,
     required this.rideRequest,
     required this.onAccept,
-    required this.onReject
+    required this.onReject,
   });
 
   @override
   Widget build(BuildContext context) {
-    
     return GestureDetector(
-      onTap: () async {
-        final result = await Navigator.of(context).push(
+      // 2. Add the onTap handler to seamlessly open the details layout
+      onTap: () {
+        Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => RideDetailsScreen(
+            builder: (context) => RideDetailsScreen(
               rideRequest: rideRequest,
-              onReject: () {
-                RideRequestService.rejectRideRequest(rideRequest.rideRequestId);
-                Navigator.pop(context, true); // RETURN VALUE
-              },
-              onAccept: (){
-                final driver=AppStateService.getCurrentDriver();
-                Trip trip= Trip(
-                  tripId: 123, 
-                  rideRequest: rideRequest, 
-                  driver: driver!, 
-                  pickupAddress: rideRequest.pickupAddress, 
-                  pickupLocation: rideRequest.pickupLocation, 
-                  dropAddress: rideRequest.dropAddress, 
-                  dropLocation: rideRequest.dropLocation, 
-                  eta: rideRequest.eta, 
-                  amount: rideRequest.amount, 
-                  distance: rideRequest.distance, 
-                  startTime: DateTime.now()
-                );
-                TripService.addTrip(trip);
-                RideRequestService.acceptRideRequest(rideRequest.rideRequestId, driver!.driverId!);
-                Navigator.of(context).pop();
-              },
+              // Pass the exact same callbacks down to the details screen buttons
+              onAccept: onAccept,
+              onReject: onReject,
             ),
           ),
         );
-
-        // AFTER COMING BACK
-        if (result == true) {
-          onReject(); // reuse existing logic (with setState)
-        }
       },
       child: Container(
-        margin: EdgeInsets.symmetric(
-          horizontal: 15,
-          vertical: 8
-        ),
-        padding: EdgeInsets.all(15),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.shade300,
-              blurRadius: 5,
-              offset: Offset(0, 3)
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             )
-          ]
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Elegant Address Sequence with a Timeline-style dot connector
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  Icons.my_location, 
-                  color: Colors.green
+                Column(
+                  children: [
+                    const Icon(Icons.circle, color: Colors.green, size: 14),
+                    Container(width: 2, height: 24, color: Colors.grey.shade200),
+                    const Icon(Icons.location_on, color: Colors.redAccent, size: 16),
+                  ],
                 ),
-                SizedBox(
-                  width:8
-                ),
+                const SizedBox(width: 14),
                 Expanded(
-                  child: Text(
-                    rideRequest.pickupLocation,
-                    style: TextStyle(
-                      fontSize: 15
-                    ),
-                  ), 
-                )
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        rideRequest.pickupLocation,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.black),
+                      ),
+                      const SizedBox(height: 18),
+                      Text(
+                        rideRequest.dropLocation,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.black),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
-            SizedBox(
-              height: 5,
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 14),
+              child: Divider(height: 1, color: Color(0xFFF1F1F1)),
             ),
-            Row(
-              children: [
-                Icon(
-                  Icons.location_on, 
-                  color: Colors.red
-                ),
-                SizedBox(
-                  width:8
-                ),
-                Expanded(
-                  child: Text(
-                    rideRequest.dropLocation,
-                    style: TextStyle(
-                      fontSize: 15
-                    ),
-                  ), 
-                )
-              ],
-            ),
-            SizedBox(
-              height:5
-            ),
+            
+            // Trip Stats Information Matrix
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text("ETA: ${rideRequest.eta}"),
-                Text("${rideRequest.distance} Km"),
-                Text("\$'${rideRequest.amount}")
+                _buildStatMetric(Icons.access_time_rounded, "${rideRequest.eta} mins"),
+                _buildStatMetric(Icons.swap_calls_rounded, "${rideRequest.distance} Km"),
+                Text(
+                  "\$${rideRequest.amount}",
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green),
+                ),
               ],
             ),
-            SizedBox(
-              height: 8
-            ),
+            const SizedBox(height: 16),
+      
+            // High-Fidelity Modern Buttons
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton(
-                    onPressed: onReject, 
-                    child: Text("Reject")
-                  )
-                ),
-                SizedBox(
-                  width: 10,
-                ),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: onAccept, 
-                    child: Text("Accept")
+                  flex: 2,
+                  child: TextButton(
+                    onPressed: onReject,
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    child: Text("Decline", style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.bold)),
                   ),
-                )
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 3,
+                  child: ElevatedButton(
+                    onPressed: onAccept,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1A1A1A), // Uber-style modern black button
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    child: const Text("Accept Request", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                  ),
+                ),
               ],
             )
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildStatMetric(IconData icon, String value) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: Colors.grey.shade500),
+        const SizedBox(width: 4),
+        Text(
+          value,
+          style: TextStyle(fontSize: 14, color: Colors.grey.shade700, fontWeight: FontWeight.w500),
+        ),
+      ],
     );
   }
 }

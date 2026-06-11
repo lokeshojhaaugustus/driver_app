@@ -1,6 +1,6 @@
 class ApiConfig {
-  static const String baseUrl = "http://10.0.2.2:8080";
-
+  static const String baseUrl = "http://192.168.1.39:8080";
+  //static const String baseUrl = "http://10.0.2.2:8080";
   static const Map<String, String> jsonHeaders = {
     "Content-Type": "application/json",
   };

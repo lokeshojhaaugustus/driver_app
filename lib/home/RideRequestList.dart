@@ -1,160 +1,79 @@
+import 'package:driver_app/controller/DriverController.dart';
+import 'package:driver_app/controller/RideRequestsController.dart'; // 👈 Your file link
 import 'package:driver_app/model/RideRequest.dart';
 import 'package:driver_app/riderequest/RideRequestCard.dart';
-import 'package:driver_app/service/AppStateService.dart';
-import 'package:driver_app/service/RideRequestService.dart';
-import 'package:driver_app/service/TripService.dart';
-import 'package:driver_app/state/AppState.dart';
-import 'package:driver_app/state/DriverStateManager.dart';
+import 'package:driver_app/service/PushNotificationService.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class RideRequestList extends StatefulWidget {
+class RideRequestList extends ConsumerStatefulWidget {
   const RideRequestList({super.key});
 
   @override
-  State<RideRequestList> createState() => _RideRequestListState();
+  ConsumerState<RideRequestList> createState() => _RideRequestListState();
 }
 
-class _RideRequestListState extends State<RideRequestList> {
-  List<RideRequest> _requests = [];
-  bool _isLoading = true;
-  int? _busyRideRequestId;
-  String? _error;
+class _RideRequestListState extends ConsumerState<RideRequestList> {
+  bool _isInitLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _loadRideRequests();
-  }
+    
+    // ⚡ Warm up the sync provider so the notification service gets the 'ref' instance instantly
+    ref.read(pushNotificationSyncProvider);
 
-  Future<void> _loadRideRequests() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
+    // Fire off the initial database fetch smoothly on mount
+    Future.microtask(() async {
+      setState(() => _isInitLoading = true);
+      await ref.read(rideRequestsControllerProvider.notifier).loadRideRequests();
+      if (mounted) setState(() => _isInitLoading = false);
     });
-
-    try {
-      final requests = await RideRequestService.getRideRequests();
-
-      if (!mounted) return;
-
-      setState(() {
-        _requests = requests;
-      });
-    } catch (_) {
-      if (!mounted) return;
-
-      setState(() {
-        _error = "Unable to load ride requests";
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _acceptRide(RideRequest request) async {
-    final driverId = AppState.currentDriver?.driverId;
-
-    if (driverId == null) {
-      return;
-    }
-
-    setState(() {
-      _busyRideRequestId = request.rideRequestId;
-    });
-
-    try {
-      final trip = await RideRequestService.acceptRideRequest(request.rideRequestId, driverId);
-
-      if (!mounted) return;
-
-      if (trip != null) {
-        AppStateService.setCurrentTrip(trip);
-        //TripService.setCurrentTrip(trip);
-        DriverStateManager().refresh();
-      }
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Unable to accept ride")));
-    } finally {
-      if (mounted) {
-        setState(() {
-          _busyRideRequestId = null;
-        });
-      }
-    }
-  }
-
-  Future<void> _rejectRide(RideRequest request) async {
-    setState(() {
-      _busyRideRequestId = request.rideRequestId;
-    });
-
-    try {
-      await RideRequestService.rejectRideRequest(request.rideRequestId);
-
-      if (!mounted) return;
-
-      setState(() {
-        _requests.removeWhere(
-          (item) => item.rideRequestId == request.rideRequestId,
-        );
-      });
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Unable to reject ride")));
-    } finally {
-      if (mounted) {
-        setState(() {
-          _busyRideRequestId = null;
-        });
-      }
-    }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
+    // ⚡ Listen directly to changes in your provider state list
+    final requests = ref.watch(rideRequestsControllerProvider);
+    final driverId = ref.watch(driverControllerProvider)?.driverId;
+
+    if (_isInitLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (_error != null) {
-      return Center(child: Text(_error!));
+    if (requests.isEmpty) {
+      return const Center(
+        child: Text(
+          "Looking for nearby trips...",
+          style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w500),
+        ),
+      );
     }
 
-    if (_requests.isEmpty) {
-      return Center(child: Text("No Ride Requests"));
-    }
+    return RefreshIndicator(
+      onRefresh: () => ref.read(rideRequestsControllerProvider.notifier).refreshRideRequests(),
+      child: ListView.builder(
+        padding: const EdgeInsets.only(bottom: 24, top: 4),
+        physics: const BouncingScrollPhysics(), 
+        itemCount: requests.length,
+        itemBuilder: (context, index) {
+          final request = requests[index];
 
-    return ListView.builder(
-      itemCount: _requests.length,
-      itemBuilder: (context, index) {
-        final request = _requests[index];
-        final isBusy = _busyRideRequestId == request.rideRequestId;
-
-        return IgnorePointer(
-          ignoring: isBusy,
-          child: Opacity(
-            opacity: isBusy ? 0.55 : 1,
-            child: RideRequestCard(
-              rideRequest: request,
-              onAccept: () {
-                _acceptRide(request);
-              },
-              onReject: () {
-                _rejectRide(request);
-              },
-            ),
-          ),
-        );
-      },
+          return RideRequestCard(
+            rideRequest: request,
+            onAccept: () async {
+              if (driverId != null) {
+                await ref.read(rideRequestsControllerProvider.notifier)
+                    .acceptRideRequest(request.rideRequestId, driverId);
+              }
+            },
+            onReject: () async {
+              await ref.read(rideRequestsControllerProvider.notifier)
+                  .rejectRideRequest(request.rideRequestId);
+            },
+          );
+        },
+      ),
     );
   }
 }

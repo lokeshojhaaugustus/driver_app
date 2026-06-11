@@ -44,7 +44,16 @@ class RideDetailsScreen extends StatelessWidget {
           ),
 
           // Buttons
-          RideActionButtons(onReject: onReject, onAccept: onAccept),
+          RideActionButtons(
+            onReject: () {
+              onReject();
+              Navigator.of(context).pop(); // Close details after action
+            },
+            onAccept: () {
+              onAccept();
+              Navigator.of(context).pop(); // Close details after action
+            },
+          ),
         ],
       ),
     );

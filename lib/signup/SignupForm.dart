@@ -1,12 +1,11 @@
-import 'dart:convert';
-
+import 'dart:io';
 import 'package:driver_app/apiservice/DriverApiService.dart';
 import 'package:driver_app/model/Driver.dart';
 import 'package:driver_app/signup/SignupButton.dart';
 import 'package:driver_app/signup/SignupProfileSelector.dart';
 import 'package:driver_app/signup/SignupTextField.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 
 class SignupForm extends StatefulWidget {
   const SignupForm({
@@ -16,7 +15,7 @@ class SignupForm extends StatefulWidget {
     required this.emailController,
     required this.phoneController,
     required this.passwordController,
-    required this.licenceController
+    required this.licenceController,
   });
 
   final TextEditingController firstNameController;
@@ -31,116 +30,141 @@ class SignupForm extends StatefulWidget {
 }
 
 class _SignupFormState extends State<SignupForm> {
+  bool _isLoading = false;
+  File? _profileImage; // Holds the local 1:1 cropped square image file
+
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsetsGeometry.only(
-        left: 20,
-        right: 20,
-        top:120,
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SignupProfileSelector(),
-          SizedBox(
-            height: 10,
-          ),
-          SignupTextField(
-            hint: "First Name", 
-            isPassword: false, 
-            controller: widget.firstNameController
-          ),
-          SizedBox(
-            height: 10,
-          ),
-          SignupTextField(
-            hint: "Last Name", 
-            isPassword: false, 
-            controller: widget.lastNameController
-          ),
-          SizedBox(
-            height: 10,
-          ),
-          SignupTextField(
-            hint: "Email", 
-            isPassword: false, 
-            controller: widget.emailController
-          ),
-          SizedBox(
-            height: 10,
-          ),
-          SignupTextField(
-            hint: "Phone", 
-            isPassword: false, 
-            controller: widget.phoneController
-          ),
-          SizedBox(
-            height: 10,
-          ),
-          SignupTextField(
-            hint: "Password", 
-            isPassword: false, 
-            controller: widget.passwordController
-          ),
-          SizedBox(
-            height: 10,
-          ),
-          SignupTextField(
-            hint: "Licence", 
-            isPassword: false, 
-            controller: widget.licenceController
-          ),
-          SizedBox(
-            height:10
-          ),
-          SignupButton(
-            onSignup: () async {
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 24,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            // Reusable Profile Selector with explicit state pass-backs
+            SignupProfileSelector(
+              selectedImage: _profileImage,
+              onImageSelected: (File? file) {
+                setState(() {
+                  _profileImage = file;
+                });
+              },
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: SignupTextField(
+                    hint: "First Name",
+                    isPassword: false,
+                    controller: widget.firstNameController,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: SignupTextField(
+                    hint: "Last Name",
+                    isPassword: false,
+                    controller: widget.lastNameController,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            SignupTextField(
+              hint: "Email Address",
+              isPassword: false,
+              keyboardType: TextInputType.emailAddress,
+              controller: widget.emailController,
+            ),
+            const SizedBox(height: 16),
+            SignupTextField(
+              hint: "Phone Number",
+              isPassword: false,
+              keyboardType: TextInputType.phone,
+              controller: widget.phoneController,
+            ),
+            const SizedBox(height: 16),
+            SignupTextField(
+              hint: "Password",
+              isPassword: true,
+              controller: widget.passwordController,
+            ),
+            const SizedBox(height: 16),
+            SignupTextField(
+              hint: "Driver License Number",
+              isPassword: false,
+              textCapitalization: TextCapitalization.characters,
+              controller: widget.licenceController,
+            ),
+            const SizedBox(height: 28),
+            _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : SignupButton(
+                    // Inside SignupForm.dart -> Replace your current onSignup logic block:
+                    onSignup: () async {
+                      if (_isLoading) return;
+                      setState(() => _isLoading = true);
 
-              Driver driver=Driver( 
-                firstName: widget.firstNameController.text, 
-                lastName: widget.lastNameController.text, 
-                email: widget.emailController.text, 
-                phone: widget.phoneController.text, 
-                password: widget.passwordController.text, 
-                licenceNumber: widget.licenceController.text
-              );
+                      try {
+                        Driver driver = Driver(
+                          firstName: widget.firstNameController.text.trim(),
+                          lastName: widget.lastNameController.text.trim(),
+                          email: widget.emailController.text.trim(),
+                          phone: widget.phoneController.text.trim(),
+                          password: widget.passwordController.text,
+                          licenceNumber: widget.licenceController.text.trim(),
+                        );
 
-              
-              final response=await DriverApiService.addDriver(driver);
-              if(response==true){
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Signup Successful!"))
-                );
-                Navigator.of(context).pushNamed("/login");
-              }
-              else{
-                print("Something went wrong!");
-              }
+                        // 1. Save text fields to database and grab the unique ID
+                        final int? newDriverId = await DriverApiService.addDriver(driver);
+                        if (!context.mounted) return;
 
-              // final driver=DriverMockData.register(
-              //   firstName: widget.firstNameController.text, 
-              //   lastName: widget.lastNameController.text, 
-              //   email: widget.emailController.text, 
-              //   phone: widget.phoneController.text, 
-              //   password: widget.passwordController.text, 
-              //   licence: widget.licenceController.text
-              // );
+                        if (newDriverId != null) {
+                          // 2. Upload the cropped picture if they picked one
+                          if (_profileImage != null) {
+                            String? remoteUrl = await DriverApiService.uploadImage(_profileImage!, newDriverId);
+                            
+                            // 3. Cache it locally to app document storage immediately
+                            if (remoteUrl != null) {
+                              final directory = await getApplicationDocumentsDirectory();
+                              final localPath = '${directory.path}/profile_driver_$newDriverId.jpg';
+                              await _profileImage!.copy(localPath); // Saves it locally as driver_X.jpg
+                            }
+                          }
 
-              // if(driver==null){
-              //   ScaffoldMessenger.of(context).showSnackBar(
-              //     SnackBar(content: Text("Email or Phone Already Exist!"))
-              //   );
-              // }
-              // else{
-              //   ScaffoldMessenger.of(context).showSnackBar(
-              //     SnackBar(content: Text("Signup Successful!"))
-              //   );
-              //   Navigator.of(context).pushNamed("/login");
-              // }
-            },
-          )
-        ],
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Signup Successful!"), backgroundColor: Colors.green),
+                          );
+                          Navigator.of(context).pushReplacementNamed("/login");
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Registration failed. Please try again."), backgroundColor: Colors.redAccent),
+                          );
+                        }
+                      } catch (_) {
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Connection error occurs"), backgroundColor: Colors.orangeAccent),
+                        );
+                      } finally {
+                        if (mounted) setState(() => _isLoading = false);
+                      }
+                    }
+                  ),
+          ],
+        ),
       ),
     );
   }

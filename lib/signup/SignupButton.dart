@@ -1,37 +1,31 @@
 import 'package:flutter/material.dart';
 
-class SignupButton extends StatefulWidget {
+class SignupButton extends StatelessWidget {
   final VoidCallback onSignup;
   const SignupButton({super.key, required this.onSignup});
 
   @override
-  State<SignupButton> createState() => _SignupButtonState();
-}
-
-class _SignupButtonState extends State<SignupButton> {
-  @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          "Sign Up",
-          style: TextStyle(
-            fontSize: 25,
-            fontWeight: FontWeight.w500,
-            color: Colors.grey.shade900,
-          ),
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: onSignup,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF2A5298),
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
-        CircleAvatar(
-          radius: 25,
-          backgroundColor: Colors.grey.shade900,
-          child: IconButton(
-            color: Colors.white,
-            onPressed: widget.onSignup,
-            icon: Icon(Icons.arrow_forward_outlined),
-          ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text("Create Account", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+            SizedBox(width: 8),
+            Icon(Icons.arrow_forward_rounded, size: 18),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

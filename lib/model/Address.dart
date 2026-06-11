@@ -37,8 +37,8 @@ class Address {
       city: json["city"], 
       state: json["state"], 
       pincode: json["pincode"], 
-      latitude: json["latitude"], 
-      longitude: json["longitude"]
+      latitude: (json["latitude"] as num).toDouble(), 
+      longitude: (json["longitude"] as num).toDouble()
     );
   }
 

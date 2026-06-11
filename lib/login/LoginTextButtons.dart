@@ -6,29 +6,17 @@ class LoginTextBUttons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         TextButton(
-          onPressed: () {
-            Navigator.of(context).pushNamed("/signup");
-          },
-          child: Text(
-            "Sign Up",
-            style: TextStyle(
-              color: Colors.blue.shade300,
-              decoration: TextDecoration.underline,
-            ),
-          ),
+          onPressed: () => Navigator.of(context).pushNamed("/signup"),
+          style: TextButton.styleFrom(foregroundColor: const Color(0xFF2A5298)),
+          child: const Text("Create Account", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
         ),
         TextButton(
           onPressed: () {},
-          child: Text(
-            "Forgot Password",
-            style: TextStyle(
-              color: Colors.blue.shade300,
-              decoration: TextDecoration.underline,
-            ),
-          ),
+          style: TextButton.styleFrom(foregroundColor: Colors.black54),
+          child: const Text("Forgot Password?", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
         ),
       ],
     );

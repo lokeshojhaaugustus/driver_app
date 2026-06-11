@@ -11,6 +11,7 @@ class Driver {
   String? password;
   final String licenceNumber;
   DriverState driverState;
+  String? profilePicUrl;
 
   Driver({
     this.driverId,
@@ -22,6 +23,7 @@ class Driver {
     required this.password,
     required this.licenceNumber,
     this.driverState = DriverState.offline,
+    this.profilePicUrl
   });
 
   Map<String, dynamic> toJson() {
@@ -31,8 +33,11 @@ class Driver {
       "lastName": lastName,
       "email": email,
       "phone": phone,
+      "address": address?.toJson(),
       "password": password,
       "licenceNumber": licenceNumber,
+      "driverState": driverState.name,
+      "profilePicUrl": profilePicUrl
     };
   }
 
@@ -49,6 +54,7 @@ class Driver {
       password: json["password"],
       licenceNumber: json["licenceNumber"] ?? json["licenseNumber"] ?? "",
       driverState: _driverStateFromJson(json["driverState"]),
+      profilePicUrl: json["profilePicUrl"],
     );
   }
 

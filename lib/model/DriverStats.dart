@@ -25,7 +25,7 @@ class DriverStats{
   Map<String, dynamic> toJson(){
     return {
       "driverStatsId": driverStatsId,
-      "driver": driver,
+      "driver": driver.toJson(),
       "totalTrips": totalTrips,
       "totalEarning": totalEarning,
       "totalDistance": totalDistance,
@@ -38,11 +38,11 @@ class DriverStats{
   factory DriverStats.fromJson(Map<String, dynamic> json){
     return DriverStats(
       driverStatsId: json["driverStatsId"],
-      driver: json["driver"], 
+      driver: Driver.fromJson(json["driver"]), 
       totalTrips: json["totalTrips"], 
       totalEarning: json["totalEarning"], 
       totalDistance: json["totalDistance"], 
-      avgRating: json["avgRating"], 
+      avgRating: (json["avgRating"] as num).toDouble(), 
       completedTrips: json["completedTrips"], 
       cancelledTrips: json["cancelledTrips"]
     );
