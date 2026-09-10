@@ -5,13 +5,13 @@ import 'package:driver_app/service/LocalCacheAvatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // <--- 1. MAKE SURE THIS IMPORT IS HERE
 
-// 2. Change StatelessWidget to ConsumerWidget
+
 class DriverProfileHeader extends ConsumerWidget {
   final Driver driver;
   const DriverProfileHeader({super.key, required this.driver});
 
   @override
-  // 3. Add 'WidgetRef ref' right here in your build parameters
+
   Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       width: double.infinity,
@@ -30,7 +30,7 @@ class DriverProfileHeader extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Navigation Bar actions row
+              
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -46,7 +46,7 @@ class DriverProfileHeader extends ConsumerWidget {
               ),
               const SizedBox(height: 20),
 
-              // Layout Presentation containing the avatar image and text profiles side-by-side
+              
               Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -61,15 +61,12 @@ class DriverProfileHeader extends ConsumerWidget {
                           pageBuilder: (context, _, _) => FullScreenProfilePicture(
                             driver: driver,
                             onImageUpdated: (String newUrl) {
-                              // 1. Mutate the existing property directly on your current object
+                              
                               driver.profilePicUrl = "$newUrl?t=${DateTime.now().millisecondsSinceEpoch}";
 
-                              // 2. Force Riverpod to alert all UI listeners by re-assigning the state directly.
-                              // In some StateNotifiers, assigning the exact same object reference might be ignored.
-                              // If your UI doesn't update, we can force it by writing it like this:
+                              
                               final notifier = ref.read(driverControllerProvider.notifier);
                               
-                              // Directly set the state to null momentarily or use your controller's update method
                               notifier.setDriver(driver); 
                             },
                           ),

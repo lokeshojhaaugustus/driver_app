@@ -76,33 +76,33 @@ class TripController extends StateNotifier<Trip?> {
   Future<String> executeCompleteTripPipeline() async {
     final trip = state;
     if (trip == null) {
-      print("🚨 Debug: Trip state is null inside Controller!");
+      print("Trip state is null inside Controller!");
       return 'FAILED';
     }
 
     try {
-      print("🔄 Debug: Attempting to complete trip #${trip.tripId} via API...");
+      print("Attempting to complete trip #${trip.tripId} via API...");
       final success = await TripService.endTrip(trip.tripId);
       
       if (!success) {
-        print("🚨 Debug: TripService returned false (Generic Failure)");
+        print(" TripService returned false (Generic Failure)");
         return 'FAILED';
       }
 
-      print("✅ Debug: Trip completed successfully on backend without document block.");
+      print("Trip completed successfully on backend without document block.");
       await RideRequestService.completeRideRequest(trip.rideRequest.rideRequestId);
       ref.read(rideRequestControllerProvider.notifier).state = null;
       state = null; 
       return 'SUCCESS';
 
     } on HttpException catch (e) {
-      print("🛑 Debug: Caught HttpException pipeline gatekeeper! Message: ${e.message}");
+      print("Caught HttpException pipeline gatekeeper! Message: ${e.message}");
       if (e.message == 'DOCS_REQUIRED') {
         return 'DOCS_REQUIRED'; 
       }
       return 'FAILED';
     } catch (e) {
-      print("🚨 Debug: Unknown Exception caught in pipeline: $e");
+      print("Unknown Exception caught in pipeline: $e");
       return 'FAILED';
     }
   }

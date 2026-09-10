@@ -14,12 +14,13 @@ class OnlineScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Map Section stays bound as the core base
+        
         const Positioned.fill(
+          //child: MapSection(),
           child: MapSection(),
         ),
 
-        // Bottom Requests Panel overlay configuration
+        
         if (showRideRequests)
           Positioned(
             left: 0,

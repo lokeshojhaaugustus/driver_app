@@ -23,7 +23,7 @@ class LocalCacheAvatar extends StatelessWidget {
           );
         }
 
-        // Safe fallback to asset while loading or if no file is present yet
+        
         return CircleAvatar(
           radius: radius,
           backgroundColor: const Color(0xFFF1F5F9),

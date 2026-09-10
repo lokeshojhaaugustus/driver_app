@@ -8,14 +8,15 @@ class RideActionButtons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.grey[900],
+      color: Color(0xFF1E3C72),
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 28), // Safe-area spacing bottom
       child: Row(
         children: [
           Expanded(
             child: OutlinedButton.icon(
               style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.redAccent,
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white,
                 side: const BorderSide(color: Colors.redAccent, width: 1.5),
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

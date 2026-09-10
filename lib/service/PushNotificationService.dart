@@ -11,7 +11,6 @@ class PushNotificationService {
   static final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
   static GlobalKey<NavigatorState>? _navigatorKey;
   
-  // ⚡ A simple, clean reference to your active Riverpod Ref
   static Ref? _ref;
 
   static Future<void> initialize(GlobalKey<NavigatorState> navigatorKey) async {
@@ -21,7 +20,7 @@ class PushNotificationService {
     await subscribeToDriverNotifications();
   }
 
-  // ⚡ Call this from your UI view once to link the notification stream to Riverpod!
+  
   static void setRef(Ref ref) {
     _ref = ref;
   }
@@ -51,21 +50,21 @@ class PushNotificationService {
 
     FirebaseMessaging.onMessageOpenedApp.listen(_processNotificationRoute);
     
-    // ⚡ YOUR CHOSEN WAY: Foreground packet interceptor
+    
     FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
-      debugPrint("⚡ Foreground notification packet intercepted!");
+      debugPrint("Foreground notification packet intercepted!");
 
       if (message.data.containsKey('rideRequestId')) {
         try {
           final int rideId = int.parse(message.data['rideRequestId']!);
           debugPrint("Calling API to fetch full RideRequest structure for ID: $rideId");
 
-          // 1. Fetch the absolute source of truth directly from backend database
+          
           RideRequest? realRideRequest = await RideRequestApiService.fetchRideById(rideId);
 
-          // 2. Safely add it to your StateNotifier state list directly using the injected _ref
+          
           if (realRideRequest != null && _ref != null) {
-            debugPrint("🎯 Success! Injecting full object into controller state.");
+            debugPrint("Injecting full object into controller state.");
             _ref!.read(rideRequestsControllerProvider.notifier).addRideRequest(realRideRequest);
           }
         } catch (e) {
@@ -111,7 +110,7 @@ class PushNotificationService {
   }
 }
 
-// 1. A simple provider that bridges Riverpod to your static service class
+
 final pushNotificationSyncProvider = Provider<void>((ref) {
   PushNotificationService.setRef(ref);
 });

@@ -1,118 +1,550 @@
-// lib/location/MapSection.dart
+import 'dart:async';
+import 'dart:convert';
+import 'dart:math' as math;
+import 'dart:ui' as ui;
+import 'package:driver_app/controller/DriverController.dart';
+import 'package:driver_app/state/DriverState.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:driver_app/controller/TripController.dart';
-import 'package:driver_app/controller/MapStateController.dart';
-import 'package:driver_app/state/TripState.dart';
-import 'package:driver_app/home/TripUploadScreen.dart'; // Import your existing upload screen layout asset module
+import 'package:http/http.dart' as http;
 
-class MapSection extends ConsumerWidget {
+import 'package:driver_app/controller/TripController.dart';
+import 'package:driver_app/state/TripState.dart';
+import 'package:driver_app/home/TripUploadScreen.dart';
+import 'package:driver_app/service/RouteManager.dart';
+
+class MapSection extends ConsumerStatefulWidget {
   const MapSection({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final mapState = ref.watch(mapStateControllerProvider);
+  ConsumerState<MapSection> createState() => _MapSectionState();
+}
+
+class _MapSectionState extends ConsumerState<MapSection> with TickerProviderStateMixin {
+
+  GoogleMapController? _mapController;
+  Set<Marker> _markers = {};
+  Set<Polyline> _polylines = {};
+  List<LatLng> _currentRoutePoints = [];
+  
+
+  bool _isLoading = true;
+  String? _errorMessage;
+  LatLng? _rawDriverLocation;
+  double _currentHeading = 0.0;
+  
+
+  bool _isUserInteracting = false;
+  Timer? _recenterTimer;
+
+
+  AnimationController? _movementController;
+  LatLng? _previousGlidedLocation;
+  LatLng? _targetGlidedLocation;
+  double _previousHeading = 0.0;
+  double _targetHeading = 0.0;
+
+
+  BitmapDescriptor? _truckIcon;
+  BitmapDescriptor? _customArrowIcon; // 👈 Guarantees heading pointer displays perfectly 100% of the time!
+  final String _apiKey = "AIzaSyA56YKW6VDfc0BBGdH80zxN2JY6R5nrgZk";
+  int? _lastProcessedTripId;
+  TripState? _lastProcessedTripState;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCustomMarkerAssets();
+
+    _movementController = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
+
+    _checkPermissionsAndStartTracking();
+  }
+
+  @override
+  void dispose() {
+    _recenterTimer?.cancel();
+    _movementController?.dispose();
+    _mapController?.dispose();
+    super.dispose();
+  }
+
+
+  Future<void> _loadCustomMarkerAssets() async {
+    try {
+
+      final ByteData truckData = await rootBundle.load('assets/img/truck_icon.png');
+      final ui.Codec truckCodec = await ui.instantiateImageCodec(
+        truckData.buffer.asUint8List(),
+        targetWidth: 150,
+      );
+      final ui.FrameInfo truckFrame = await truckCodec.getNextFrame();
+      final ByteData? truckBytes = await truckFrame.image.toByteData(format: ui.ImageByteFormat.png);
+      
+      if (truckBytes != null && mounted) {
+        setState(() {
+          _truckIcon = BitmapDescriptor.fromBytes(truckBytes.buffer.asUint8List());
+        });
+      }
+
+      
+      final ui.PictureRecorder recorder = ui.PictureRecorder();
+      final Canvas canvas = Canvas(recorder);
+      const double size = 80.0;
+      
+      final Paint arrowPaint = Paint()
+        ..color = const ui.Color(0xFF2196F3) // Electric navigation blue layout color profile
+        ..style = PaintingStyle.fill;
+
+      final Path path = Path();
+      path.moveTo(size / 2, 0); 
+      path.lineTo(size * 0.8, size * 0.8);
+      path.lineTo(size / 2, size * 0.6); 
+      path.lineTo(size * 0.2, size * 0.8);
+      path.close();
+
+      canvas.drawPath(path, arrowPaint);
+      
+      final ui.Image arrowImg = await recorder.endRecording().toImage(size.toInt(), size.toInt());
+      final ByteData? arrowBytes = await arrowImg.toByteData(format: ui.ImageByteFormat.png);
+      
+      if (arrowBytes != null && mounted) {
+        setState(() {
+          _customArrowIcon = BitmapDescriptor.fromBytes(arrowBytes.buffer.asUint8List());
+        });
+      }
+    } catch (e) {
+      debugPrint("Marker setup fallback configuration trigger: $e");
+    }
+  }
+
+
+  Future<void> _checkPermissionsAndStartTracking() async {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        setState(() => _errorMessage = "Location services are disabled.");
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          setState(() => _errorMessage = "Location permission denied.");
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        setState(() => _errorMessage = "Location permissions permanently denied.");
+        return;
+      }
+
+      Position initPos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      if (mounted) {
+        setState(() {
+          _rawDriverLocation = LatLng(initPos.latitude, initPos.longitude);
+          _currentHeading = initPos.heading;
+          _isLoading = false;
+        });
+        _updateDriverMarkerAndCameraPosition();
+      }
+
+      Geolocator.getPositionStream(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          distanceFilter: 2,
+        ),
+      ).listen((Position position) {
+        if (!mounted) return;
+
+        final LatLng driverLatLng = LatLng(position.latitude, position.longitude);
+        _trimTraveledPath(driverLatLng);
+
+        setState(() {
+          _rawDriverLocation = driverLatLng;
+          _currentHeading = position.heading;
+        });
+
+        _updateDriverMarkerAndCameraPosition();
+      }, onError: (e) {
+        if (mounted) setState(() => _errorMessage = e.toString());
+      });
+
+    } catch (e) {
+      if (mounted) setState(() => _errorMessage = e.toString());
+    }
+  }
+
+  
+  Future<void> _fetchAndDrawRoute(LatLng destination) async {
+    if (_rawDriverLocation == null) return;
+    
+    try {
+      final String url = "https://maps.googleapis.com/maps/api/directions/json"
+          "?origin=${_rawDriverLocation!.latitude},${_rawDriverLocation!.longitude}"
+          "&destination=${destination.latitude},${destination.longitude}"
+          "&key=$_apiKey";
+          
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        if (data["status"] == "OK") {
+          List<LatLng> detailedCoordinates = [];
+          var legs = data["routes"][0]["legs"] as List;
+          for (var leg in legs) {
+            var steps = leg["steps"] as List;
+            for (var step in steps) {
+              String stepPolyline = step["polyline"]["points"];
+              detailedCoordinates.addAll(_decodePolyline(stepPolyline));
+            }
+          }
+
+          if (mounted) {
+            setState(() {
+              _currentRoutePoints = List.from(detailedCoordinates);
+              _polylines = {
+                Polyline(
+                  polylineId: const PolylineId("route"),
+                  points: _currentRoutePoints,
+                  color: const Color(0xFF1E3C72),
+                  width: 6,
+                  geodesic: true,
+                  startCap: Cap.roundCap,
+                  endCap: Cap.roundCap,
+                  jointType: JointType.round,
+                )
+              };
+            });
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint("API Directions route calculation error: $e");
+    }
+  }
+
+  List<LatLng> _decodePolyline(String encoded) {
+    List<LatLng> poly = [];
+    int index = 0, len = encoded.length;
+    int lat = 0, lng = 0;
+
+    while (index < len) {
+      int b, shift = 0, result = 0;
+      do {
+        b = encoded.codeUnitAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      int dlat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+      lat += dlat;
+
+      shift = 0;
+      result = 0;
+      do {
+        b = encoded.codeUnitAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      int dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+      lng += dlng;
+
+      poly.add(LatLng(lat / 1E5, lng / 1E5));
+    }
+    return poly;
+  }
+
+
+  void _trimTraveledPath(LatLng driverPos) {
+    if (_currentRoutePoints.isEmpty) return;
+
+    int closestIndex = 0;
+    double shortestDistance = double.infinity;
+
+    for (int i = 0; i < _currentRoutePoints.length; i++) {
+      double distance = _calculateHaversineDistance(driverPos, _currentRoutePoints[i]);
+      if (distance < shortestDistance) {
+        shortestDistance = distance;
+        closestIndex = i;
+      }
+    }
+
+    if (closestIndex > 0 && shortestDistance < 30.0) {
+      _currentRoutePoints = _currentRoutePoints.sublist(closestIndex);
+      if (_polylines.isNotEmpty) {
+        final existingPolyline = _polylines.first;
+        setState(() {
+          _polylines = {
+            existingPolyline.copyWith(pointsParam: _currentRoutePoints)
+          };
+        });
+      }
+    }
+  }
+
+  double _calculateHaversineDistance(LatLng p1, LatLng p2) {
+    const double earthRadius = 6371000;
+    double dLat = (p2.latitude - p1.latitude) * (math.pi / 180.0);
+    double dLng = (p2.longitude - p1.longitude) * (math.pi / 180.0);
+
+    double a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+        math.cos(p1.latitude * (math.pi / 180.0)) *
+            math.cos(p2.latitude * (math.pi / 180.0)) *
+            math.sin(dLng / 2) * math.sin(dLng / 2);
+
+    double c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+    return earthRadius * c;
+  }
+
+
+  void _moveCameraToOffsetPosition(LatLng position, double bearing, bool isTravelling) {
+    if (_mapController == null || _isUserInteracting) return;
+
+    LatLng cameraTarget;
+
+    if (isTravelling) {
+      final double offsetDistance = 0.0018;
+      final double bearingInRadius = bearing * (math.pi / 180);
+
+      final double offsetLat = position.latitude + (offsetDistance * math.cos(bearingInRadius));
+      final double offsetLng = position.longitude + (offsetDistance * math.sin(bearingInRadius));
+      cameraTarget = LatLng(offsetLat, offsetLng);
+
+      _mapController!.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: cameraTarget,
+            zoom: 17.5,
+            tilt: 45.0,
+            bearing: bearing,
+          ),
+        ),
+      );
+    } else {
+      cameraTarget = position;
+      _mapController!.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: cameraTarget,
+            zoom: 17.5,
+            tilt: 0.0,
+            bearing: 0.0,
+          ),
+        ),
+      );
+    }
+  }
+
+
+  void _startRecenterTimer(bool isTravelling) {
+    _recenterTimer?.cancel();
+    _recenterTimer = Timer(const Duration(seconds: 3), () {
+      if (!mounted) return;
+      setState(() => _isUserInteracting = false);
+      
+      if (_rawDriverLocation != null) {
+        _moveCameraToOffsetPosition(_rawDriverLocation!, _currentHeading, isTravelling);
+      }
+    });
+  }
+
+
+  void _updateDriverMarkerAndCameraPosition() {
+    if (_rawDriverLocation == null) return;
+    final driverState= ref.read(driverControllerProvider).driver?.driverState;
+    final bool isOnline=driverState ==  DriverState.online;
+    final trip = ref.read(tripControllerProvider);
+    final bool isTravelling = trip != null && (trip.tripState == TripState.onPickup || trip.tripState == TripState.onTrip);
+    final bool shouldFollowHeading= isTravelling || isOnline; 
+    if (_previousGlidedLocation == null) {
+      _previousGlidedLocation = _rawDriverLocation;
+      _targetGlidedLocation = _rawDriverLocation;
+      _previousHeading = _currentHeading;
+      _targetHeading = _currentHeading;
+
+      _renderMarkersLayer(_previousGlidedLocation!, _previousHeading, trip);
+      _moveCameraToOffsetPosition(_previousGlidedLocation!, _previousHeading, isTravelling);
+      return;
+    }
+
+    _previousGlidedLocation = _targetGlidedLocation;
+    _targetGlidedLocation = _rawDriverLocation;
+    _previousHeading = _targetHeading;
+    _targetHeading = _currentHeading;
+
+    _movementController?.reset();
+    final Animation<double> curve = CurvedAnimation(parent: _movementController!, curve: Curves.linear);
+
+    _movementController!.clearListeners();
+    _movementController!.addListener(() {
+      if (!mounted) return;
+      final double t = curve.value;
+
+      final double currentLat = _previousGlidedLocation!.latitude +
+          (_targetGlidedLocation!.latitude - _previousGlidedLocation!.latitude) * t;
+      final double currentLng = _previousGlidedLocation!.longitude +
+          (_targetGlidedLocation!.longitude - _previousGlidedLocation!.longitude) * t;
+      
+      final double currentHeading = _previousHeading + (_targetHeading - _previousHeading) * t;
+      final LatLng intermediateLocation = LatLng(currentLat, currentLng);
+
+      _renderMarkersLayer(intermediateLocation, currentHeading, trip);
+      _moveCameraToOffsetPosition(intermediateLocation, currentHeading, isTravelling);
+    });
+
+    _movementController!.forward();
+  }
+
+  void _renderMarkersLayer(LatLng position, double heading, dynamic trip) {
+    Set<Marker> localMarkers = {};
+    
+    if (_customArrowIcon != null) {
+      localMarkers.add(
+        Marker(
+          markerId: const MarkerId("driver_arrow_pointer"),
+          position: position,
+          icon: _customArrowIcon!,
+          anchor: const Offset(0.5, 0.5),
+          rotation: heading,
+          flat: true,
+          zIndex: 1,
+        ),
+      );
+    }
+
+   
+    BitmapDescriptor driverIcon = _truckIcon ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure);
+    localMarkers.add(
+      Marker(
+        markerId: const MarkerId("driver_marker"),
+        position: position,
+        icon: driverIcon,
+        anchor: const Offset(0.5, 0.5),
+        rotation: heading,
+        flat: true,
+        zIndex: 2, 
+      ),
+    );
+
+
+    if (trip != null) {
+      final targetDestination = RouteManager.getTargetDestination(trip);
+      if (targetDestination != null) {
+        localMarkers.add(
+          Marker(
+            markerId: MarkerId(trip.tripState == TripState.onPickup ? "pickup" : "drop"),
+            position: targetDestination,
+            flat: false,
+            zIndex: 3,
+          ),
+        );
+      }
+    }
+
+    setState(() => _markers = localMarkers);
+  }
+
+
+  void _evalRoutePipelines(dynamic trip) {
+    if (trip == null) {
+      if (_currentRoutePoints.isNotEmpty) {
+        setState(() {
+          _currentRoutePoints.clear();
+          _polylines.clear();
+        });
+      }
+      _lastProcessedTripId = null;
+      _lastProcessedTripState = null;
+      return;
+    }
+
+    bool shouldRefetch = _lastProcessedTripId != trip.tripId || 
+                         _lastProcessedTripState != trip.tripState || 
+                         _polylines.isEmpty;
+
+    if (shouldRefetch) {
+      _lastProcessedTripId = trip.tripId;
+      _lastProcessedTripState = trip.tripState;
+      final targetDest = RouteManager.getTargetDestination(trip);
+      if (targetDest != null) {
+        Future.microtask(() => _fetchAndDrawRoute(targetDest));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final trip = ref.watch(tripControllerProvider);
+    _evalRoutePipelines(trip);
 
-    if (mapState.isCheckingPermission) {
+    if (_errorMessage != null) {
+      return Center(child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Text(_errorMessage!, style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+      ));
+    }
+
+    if (_isLoading || _rawDriverLocation == null) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (!mapState.hasPermission) {
-      return const Center(child: Text("Location permission denied"));
-    }
-
-    if (mapState.currentPos == null) {
-      return const Center(child: CircularProgressIndicator());
+    final bool isTravelling = trip != null && (trip.tripState == TripState.onPickup || trip.tripState == TripState.onTrip);
+    final double initialBearing = _previousHeading;
+    
+    LatLng initialCameraFocus = _rawDriverLocation!;
+    if (isTravelling) {
+      final double offsetDistance = 0.0018;
+      final double bearingInRadians = initialBearing * (math.pi / 180.0);
+      initialCameraFocus = LatLng(
+        _rawDriverLocation!.latitude + (offsetDistance * math.cos(bearingInRadians)),
+        _rawDriverLocation!.longitude + (offsetDistance * math.sin(bearingInRadians)),
+      );
     }
 
     return Stack(
       children: [
         GoogleMap(
           initialCameraPosition: CameraPosition(
-            target: mapState.currentPos!,
-            zoom: 16.5,
+            target: initialCameraFocus,
+            zoom: 17.5,
+            tilt: isTravelling ? 45.0 : 0.0,
+            bearing: isTravelling ? initialBearing : 0.0,
           ),
-          myLocationEnabled: false, // Turned off to prevent native blue dot overlays
-          myLocationButtonEnabled: false,
+          myLocationEnabled: true,
+          myLocationButtonEnabled: true,
+          zoomControlsEnabled: false,
+          markers: _markers,
+          polylines: _polylines,
+          padding: EdgeInsets.only(bottom: MediaQuery.of(context).size.height * 0.32),
           onMapCreated: (controller) async {
-            ref.read(mapStateControllerProvider.notifier).googleMapController = controller;
-            
-            // Apply lightweight customized POI asset filtering style sheet
+            _mapController = controller;
             try {
               String cleanStyle = await rootBundle.loadString('assets/map_style.json');
               await controller.setMapStyle(cleanStyle);
-            } catch (e) {
-              debugPrint("Error loading clean style: $e");
-            }
-
-            Future.microtask(() {
-              ref.read(mapStateControllerProvider.notifier).updateRoute();
-            });
+            } catch (_) {}
+            _updateDriverMarkerAndCameraPosition();
           },
-          markers: _buildMarkers(trip, mapState.currentPos, ref),
-          polylines: mapState.polylines,
-          padding: EdgeInsets.only(bottom: MediaQuery.of(context).size.height * 0.30),
+          onCameraMoveStarted: () {
+            _recenterTimer?.cancel();
+            setState(() => _isUserInteracting = true);
+          },
+          onCameraIdle: () {
+            if (_isUserInteracting) {
+              _startRecenterTimer(isTravelling);
+            }
+          },
         ),
         const _BottomTripCardPanel(),
       ],
     );
-  }
-
-  Set<Marker> _buildMarkers(dynamic trip, LatLng? currentPos, WidgetRef ref) {
-    Set<Marker> markers = {};
-    if (currentPos == null) return markers;
-
-    final mapState = ref.watch(mapStateControllerProvider);
-
-    // 🌟 DEFAULT LOOK: Blue dot with directional indicator beam
-    BitmapDescriptor driverIcon = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure);
-
-    // 🔄 LOOK SWAP BASED ON STATE: Move into navigation tracking mode triangle arrow
-    if (trip != null) {
-      if (trip.tripState == TripState.onPickup || trip.tripState == TripState.onTrip) {
-        // High contrast hue representing Google's clean navigation triangle arrow
-        driverIcon = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue);
-      }
-    }
-
-    markers.add(
-      Marker(
-        markerId: const MarkerId("driver"),
-        position: currentPos,
-        icon: driverIcon,
-        rotation: mapState.bearing,     // Points icon matching driving vectors
-        anchor: const Offset(0.5, 0.5), // Axis center lock formatting
-        flat: true,                    // Keeps it aligned to pavement flat lanes
-      ),
-    );
-
-    if (trip == null) return markers;
-
-    // Target Destination Pins: Configured as standard billboards (flat: false) so they always face up
-    if (trip.tripState == TripState.accepted || trip.tripState == TripState.onPickup) {
-      markers.add(
-        Marker(
-          markerId: const MarkerId("pickup"),
-          position: LatLng(trip.pickupAddress.latitude, trip.pickupAddress.longitude),
-          flat: false, 
-        ),
-      );
-    }
-
-    if (trip.tripState == TripState.arrived || trip.tripState == TripState.onTrip) {
-      markers.add(
-        Marker(
-          markerId: const MarkerId("drop"),
-          position: LatLng(trip.dropAddress.latitude, trip.dropAddress.longitude),
-          flat: false,
-        ),
-      );
-    }
-
-    return markers;
   }
 }
 
@@ -151,7 +583,21 @@ class _BottomTripCardPanel extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  "Navigation Mode Active",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF1E3C72)),
+                ),
+                Text(
+                  "${trip.rideRequest.distance} km",
+                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
+            const Divider(height: 20),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -168,14 +614,14 @@ class _BottomTripCardPanel extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "${trip.pickupAddress.streetLine1}, ${trip.pickupAddress.city}",
+                        "${trip.rideRequest.pickupAddress.streetLine1}, ${trip.rideRequest.pickupAddress.city}",
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 18),
                       Text(
-                        "${trip.dropAddress.streetLine1}, ${trip.dropAddress.city}",
+                        "${trip.rideRequest.dropAddress.streetLine1}, ${trip.rideRequest.dropAddress.city}",
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -188,10 +634,9 @@ class _BottomTripCardPanel extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      "₹${trip.amount.toStringAsFixed(0)}",
+                      "₹${trip.rideRequest.amount.toStringAsFixed(0)}",
                       style: const TextStyle(color: Color(0xFF2E7D32), fontWeight: FontWeight.bold, fontSize: 18),
                     ),
-                    Text("${trip.distance} km", style: TextStyle(color: Colors.grey.shade500, fontSize: 11)),
                   ],
                 ),
               ],
@@ -209,41 +654,19 @@ class _BottomTripCardPanel extends ConsumerWidget {
 
   Widget _buildLifecycleButton(BuildContext context, WidgetRef ref, dynamic trip) {
     final notifier = ref.read(tripControllerProvider.notifier);
-    final mapNotifier = ref.read(mapStateControllerProvider.notifier);
 
     switch (trip.tripState) {
       case TripState.accepted:
-        return _buildButton("Start Ride", Icons.navigation_rounded, const Color(0xFF1E3C72), () async {
-          if (await notifier.startRide()) await mapNotifier.updateRoute();
-        });
+        return _buildButton("Start Ride", Icons.navigation_rounded, const Color(0xFF1E3C72), () => notifier.startRide());
       case TripState.onPickup:
-        return _buildButton("Arrived at Pickup", Icons.pin_drop_rounded, const Color(0xFFE65100), () async {
-          if (await notifier.arrivedAtPickup()) await mapNotifier.updateRoute();
-        });
+        return _buildButton("Arrived at Pickup", Icons.pin_drop_rounded, const Color(0xFFE65100), () => notifier.arrivedAtPickup());
       case TripState.arrived:
-        return _buildButton("Start Trip", Icons.play_arrow_rounded, const Color(0xFF2E7D32), () async {
-          if (await notifier.startTrip()) await mapNotifier.updateRoute();
-        });
+        return _buildButton("Start Trip", Icons.play_arrow_rounded, const Color(0xFF2E7D32), () => notifier.startTrip());
       case TripState.onTrip:
         return _buildButton("Complete Trip", Icons.check_circle_rounded, const Color(0xFFC62828), () async {
-          
-          // ⚡ Fire updated execution status pipeline check
           String result = await notifier.executeCompleteTripPipeline();
-          
-          if (result == 'SUCCESS') {
-            await mapNotifier.updateRoute();
-          } else if (result == 'DOCS_REQUIRED') {
-            // 🛑 INTERCEPTED: Open upload controller layout securely
-            if (context.mounted) {
-              _navigateToUploadRequirement(context, trip.tripId, notifier, mapNotifier);
-            }
-          } else {
-            // Generic Error Alert handler fallback
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Could not complete trip. Please check connection.')),
-              );
-            }
+          if (result == 'DOCS_REQUIRED' && context.mounted) {
+            _navigateToUploadRequirement(context, trip.tripId, notifier);
           }
         });
       default:
@@ -251,41 +674,26 @@ class _BottomTripCardPanel extends ConsumerWidget {
     }
   }
 
-  // Helper routine displaying explicit requirements modal sheet
-  // Helper routine displaying explicit requirements modal sheet
-  void _navigateToUploadRequirement(BuildContext context, int tripId, dynamic notifier, dynamic mapNotifier) {
+  void _navigateToUploadRequirement(BuildContext context, int tripId, dynamic notifier) {
     showModalBottomSheet(
       context: context,
       isDismissible: false,
       enableDrag: false,
-      // ⚡ FIX: Allow dynamic resizing bounds to fit various device widths and aspect heights perfectly
-      isScrollControlled: true, 
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (modalContext) => Padding(
-        // ⚡ Ensure it pushes safely above system bottom sheets or navigation bars
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(modalContext).viewInsets.bottom,
-        ),
+        padding: EdgeInsets.only(bottom: MediaQuery.of(modalContext).viewInsets.bottom),
         child: Container(
           padding: const EdgeInsets.all(24.0),
-          // ⚡ FIX: Removed hardcoded "height: 240" entirely!
           child: Column(
-            // ⚡ FIX: Instruct the column loop to only pack as much space as its children need
-            mainAxisSize: MainAxisSize.min, 
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               const Icon(Icons.note_add_rounded, size: 44, color: Colors.orange),
               const SizedBox(height: 12),
-              const Text(
-                "Verification Documents Required",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
+              const Text("Verification Documents Required", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
-              const Text(
-                "Please upload proof of delivery photo files to complete this trip execution loop.",
-                textAlign: TextAlign.center, // Clearer alignment styling look
-              ),
-              const SizedBox(height: 24), // Balanced breathing cushion space
+              const Text("Please upload proof of delivery photo files to complete this trip execution loop.", textAlign: TextAlign.center),
+              const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
                 height: 48,
@@ -295,19 +703,11 @@ class _BottomTripCardPanel extends ConsumerWidget {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   onPressed: () {
-                    Navigator.pop(modalContext); // Dismiss bottom sheet
-                    
+                    Navigator.pop(modalContext);
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => TripUploadScreen(tripId: tripId),
-                      ),
-                    ).then((_) async {
-                      String recheckResult = await notifier.executeCompleteTripPipeline();
-                      if (recheckResult == 'SUCCESS') {
-                        await mapNotifier.updateRoute();
-                      }
-                    });
+                      MaterialPageRoute(builder: (context) => TripUploadScreen(tripId: tripId)),
+                    ).then((_) => notifier.executeCompleteTripPipeline());
                   },
                   child: const Text("OPEN UPLOAD PORTAL", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                 ),

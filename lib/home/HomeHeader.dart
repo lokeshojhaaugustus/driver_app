@@ -24,7 +24,8 @@ class _HomeHeaderState extends State<HomeHeader> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.95),
+        color: Color(0xFF1E3C72),
+        //color: Colors.white.withOpacity(0.95),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
@@ -44,8 +45,8 @@ class _HomeHeaderState extends State<HomeHeader> {
                 border: Border.all(color: Colors.blueAccent.withOpacity(0.3), width: 2),
               ),
               child: LocalCacheAvatar(
-      // Safely parse your Driver ID text field into an integer for the caching rules
-                radius: 22, // Size adjusted perfectly to sit inside your map header row
+      
+                radius: 22,
               ),
               // child: const CircleAvatar(
               //   radius: 22,
@@ -64,17 +65,17 @@ class _HomeHeaderState extends State<HomeHeader> {
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                    color: Colors.white,
                   ),
                 ),
                 Text(
                   widget.driver.licenceNumber,
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                  style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.7), fontWeight: FontWeight.w500),
                 ),
               ],
             ),
           ),
-          // Instantly renders toggle cleaner inline to make the app aesthetic balanced
+          
           const OnlineOfflineToggle(),
         ],
       ),

@@ -3,15 +3,36 @@ import 'package:driver_app/service/DriverService.dart';
 import 'package:driver_app/state/DriverState.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class DriverController extends StateNotifier<Driver?> {
-  DriverController() : super(null);
+
+class DriverNotifierState {
+  final Driver? driver;
+  final bool isUpdating;
+
+  DriverNotifierState({
+    this.driver,
+    this.isUpdating = false,
+  });
+
+  DriverNotifierState copyWith({
+    Driver? driver,
+    bool? isUpdating,
+  }) {
+    return DriverNotifierState(
+      driver: driver ?? this.driver,
+      isUpdating: isUpdating ?? this.isUpdating,
+    );
+  }
+}
+
+class DriverController extends StateNotifier<DriverNotifierState> {
+  DriverController() : super(DriverNotifierState());
 
   void setDriver(Driver driver) {
-    state = driver;
+    state = state.copyWith(driver: driver);
   }
 
   void clearDriver() {
-    state = null;
+    state = DriverNotifierState(driver: null, isUpdating: false);
   }
 
   Future<bool> toggleOnlineStatus(bool goOnline) async {
@@ -20,24 +41,35 @@ class DriverController extends StateNotifier<Driver?> {
   }
 
   Future<bool> updateDriverState(DriverState driverState) async {
-    final driver = state;
-    if (driver == null || driver.driverId == null) {
+    final currentDriver = state.driver;
+    if (currentDriver == null || currentDriver.driverId == null) {
       return false;
     }
-    final success = await DriverService.updateDriverState(
-      driver.driverId!,
-      driverState,
-    );
-    if(!success){
+
+    state = state.copyWith(isUpdating: true);
+
+    try {
+      final success = await DriverService.updateDriverState(
+        currentDriver.driverId!,
+        driverState,
+      );
+      
+      if (!success) {
+        state = state.copyWith(isUpdating: false);
+        return false;
+      }
+
+      currentDriver.driverState = driverState;
+      state = DriverNotifierState(driver: currentDriver, isUpdating: false);
+      return true;
+    } catch (_) {
+      state = state.copyWith(isUpdating: false);
       return false;
     }
-    driver.driverState = driverState;
-    state=null;
-    state = driver;
-    return true;
   }
 }
 
-final driverControllerProvider = StateNotifierProvider<DriverController, Driver?>(
-        (ref) => DriverController(),
-  );
+
+final driverControllerProvider = StateNotifierProvider<DriverController, DriverNotifierState>(
+  (ref) => DriverController(),
+);

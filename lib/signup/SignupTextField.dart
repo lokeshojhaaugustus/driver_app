@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
+
 class SignupTextField extends StatefulWidget {
   final String hint;
   final bool isPassword;
   final TextEditingController controller;
   final TextInputType keyboardType;
   final TextCapitalization textCapitalization;
+  final bool readOnly;
 
   const SignupTextField({
     super.key,
@@ -14,6 +16,7 @@ class SignupTextField extends StatefulWidget {
     required this.controller,
     this.keyboardType = TextInputType.text,
     this.textCapitalization = TextCapitalization.none,
+    this.readOnly = false,
   });
 
   @override
@@ -22,12 +25,20 @@ class SignupTextField extends StatefulWidget {
 
 class _SignupTextFieldState extends State<SignupTextField> {
   bool _obscureText = true;
-
+  
   IconData _getPrefixIcon() {
-    if (widget.isPassword) return Icons.lock_outline_rounded;
-    if (widget.hint.contains("First") || widget.hint.contains("Last")) return Icons.person_outline_rounded;
-    if (widget.hint.contains("Email")) return Icons.mail_outline_rounded;
-    if (widget.hint.contains("Phone")) return Icons.phone_android_rounded;
+    if (widget.isPassword) {
+      return Icons.lock_outline_rounded;
+    }
+    if (widget.hint.contains("First") || widget.hint.contains("Last")){
+      return Icons.person_outline_rounded;
+    }
+    if (widget.hint.contains("Email")) {
+      return Icons.mail_outline_rounded;
+    } 
+    if (widget.hint.contains("Phone")) {
+      return Icons.phone_android_rounded;
+    }
     return Icons.badge_outlined;
   }
 
@@ -39,8 +50,9 @@ class _SignupTextFieldState extends State<SignupTextField> {
       keyboardType: widget.keyboardType,
       textCapitalization: widget.textCapitalization,
       style: const TextStyle(fontSize: 15, color: Colors.black87),
+      readOnly: widget.readOnly,
       decoration: InputDecoration(
-        fillColor: const Color(0xFFF1F5F9),
+        fillColor: widget.readOnly ? const Color(0xFFE2E8F0) : const Color(0xFFF1F5F9),
         filled: true,
         hintText: widget.hint,
         hintStyle: const TextStyle(color: Colors.black38, fontSize: 14),

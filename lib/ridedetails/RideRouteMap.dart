@@ -23,12 +23,12 @@ class _RideRouteMapState extends State<RideRouteMap> {
   GoogleMapController? _mapController;
   late Future<String> _mapStyleFuture;
   
-  // Local reactive sets
+  
   final Set<Polyline> _polylines = {};
   List<LatLng> _polylineCoordinates = [];
   bool _isLoadingRoute = true;
 
-  // 🚨 Paste the exact same API Key that works on your Home Screen Map Section
+ 
   final String _googleApiKey = "AIzaSyA56YKW6VDfc0BBGdH80zxN2JY6R5nrgZk"; 
 
   @override
@@ -37,8 +37,7 @@ class _RideRouteMapState extends State<RideRouteMap> {
     _mapStyleFuture = rootBundle.loadString('assets/map_style.json');
   }
 
-  // 🗺️ Core Routing Engine
-  // 🗺️ High-Resolution Routing Engine (Snaps perfectly to roads)
+
   Future<void> _fetchAndDrawRoute() async {
     if (widget.pickup.latitude == 0.0 || widget.drop.latitude == 0.0) {
       debugPrint("🛑 Error: Coordinates are empty.");
@@ -61,14 +60,14 @@ class _RideRouteMapState extends State<RideRouteMap> {
           _polylineCoordinates.clear();
           _polylines.clear();
 
-          // ⚡ HIGH-RES FIX: Grab the detailed steps array inside the route legs
+          
           final legs = data['routes'][0]['legs'];
           if (legs != null && legs.isNotEmpty) {
             final steps = legs[0]['steps'];
             
             for (var step in steps) {
               final encodedPoints = step['polyline']['points'];
-              // Decode and append every single micro-turn coordinate
+              
               _polylineCoordinates.addAll(_decodePolyline(encodedPoints));
             }
           }
@@ -90,17 +89,17 @@ class _RideRouteMapState extends State<RideRouteMap> {
 
           _fitPointsInFrame();
         } else {
-          debugPrint("❌ Google Directions Error: ${data['status']}");
+          debugPrint("Google Directions Error: ${data['status']}");
           setState(() => _isLoadingRoute = false);
         }
       }
     } catch (e) {
-      debugPrint("❌ Network Layer Execution Failure: $e");
+      debugPrint("Network Layer Execution Failure: $e");
       setState(() => _isLoadingRoute = false);
     }
   }
 
-  // Native structural polyline decoding routine
+  
   List<LatLng> _decodePolyline(String encoded) {
     List<LatLng> poly = [];
     int index = 0, len = encoded.length;
@@ -168,7 +167,7 @@ class _RideRouteMapState extends State<RideRouteMap> {
               onMapCreated: (controller) {
                 _mapController = controller;
                 
-                // ⚡ KICK OFF ROUTE FETCHING ONLY AFTER MAP CREATION COMPLETE
+                
                 _fetchAndDrawRoute();
               },
             ),
@@ -208,7 +207,7 @@ class _RideRouteMapState extends State<RideRouteMap> {
       northeast: LatLng(maxLat, maxLng),
     );
 
-    // Apply viewport pad buffer smoothly
+    
     _mapController!.animateCamera(CameraUpdate.newLatLngBounds(bounds, 70));
   }
 

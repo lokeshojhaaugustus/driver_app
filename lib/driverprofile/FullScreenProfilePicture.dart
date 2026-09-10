@@ -29,18 +29,18 @@ class _FullScreenProfilePictureState extends State<FullScreenProfilePicture> {
 
     setState(() => _isUploading = true);
 
-    // 1. Upload to Spring Boot Backend
+
     final String? newImageUrl = await DriverApiService.uploadImage(
       croppedImage, 
       widget.driver.driverId ?? 0,
     );
 
-    // 2. Put your single local file overwrite block right here!
+
     if (newImageUrl != null) {
-      // Overwrite our single local file source of truth immediately!
+
       await ProfileImageManager.overwriteLocalFile(croppedImage);
 
-      // Pass it back up to update Riverpod state so the UI updates
+
       widget.onImageUpdated(newImageUrl);
       
       if (mounted) {
@@ -82,9 +82,9 @@ class _FullScreenProfilePictureState extends State<FullScreenProfilePicture> {
                       )
                     : const Hero(
                         tag: 'avatar-profile-hero',
-                        // 3. CLEANED UP: No properties needed anymore!
+                        
                         child: LocalCacheAvatar(
-                          radius: 200, // Customize size directly
+                          radius: 200, 
                         ),
                       ),
               ),
@@ -117,7 +117,7 @@ class _FullScreenProfilePictureState extends State<FullScreenProfilePicture> {
                         icon: const Icon(Icons.delete_outline_rounded, size: 18),
                         label: const Text("Remove"),
                         onPressed: _isUploading ? null : () {
-                          // Handle deletion if needed later
+                          // for later
                         },
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 12),

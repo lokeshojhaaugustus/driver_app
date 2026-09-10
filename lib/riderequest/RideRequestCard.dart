@@ -17,13 +17,13 @@ class RideRequestCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      // 2. Add the onTap handler to seamlessly open the details layout
+
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => RideDetailsScreen(
               rideRequest: rideRequest,
-              // Pass the exact same callbacks down to the details screen buttons
+              
               onAccept: onAccept,
               onReject: onReject,
             ),
@@ -47,7 +47,7 @@ class RideRequestCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Elegant Address Sequence with a Timeline-style dot connector
+            
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -86,7 +86,7 @@ class RideRequestCard extends StatelessWidget {
               child: Divider(height: 1, color: Color(0xFFF1F1F1)),
             ),
             
-            // Trip Stats Information Matrix
+            
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -100,7 +100,7 @@ class RideRequestCard extends StatelessWidget {
             ),
             const SizedBox(height: 16),
       
-            // High-Fidelity Modern Buttons
+            
             Row(
               children: [
                 Expanded(

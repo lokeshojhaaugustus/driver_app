@@ -1,6 +1,6 @@
 import 'package:driver_app/controller/DriverController.dart';
-import 'package:driver_app/controller/RideRequestsController.dart'; // 👈 Your file link
-import 'package:driver_app/model/RideRequest.dart';
+import 'package:driver_app/controller/RideRequestsController.dart'; 
+
 import 'package:driver_app/riderequest/RideRequestCard.dart';
 import 'package:driver_app/service/PushNotificationService.dart';
 import 'package:flutter/material.dart';
@@ -20,10 +20,10 @@ class _RideRequestListState extends ConsumerState<RideRequestList> {
   void initState() {
     super.initState();
     
-    // ⚡ Warm up the sync provider so the notification service gets the 'ref' instance instantly
+    
     ref.read(pushNotificationSyncProvider);
 
-    // Fire off the initial database fetch smoothly on mount
+
     Future.microtask(() async {
       setState(() => _isInitLoading = true);
       await ref.read(rideRequestsControllerProvider.notifier).loadRideRequests();
@@ -33,9 +33,9 @@ class _RideRequestListState extends ConsumerState<RideRequestList> {
 
   @override
   Widget build(BuildContext context) {
-    // ⚡ Listen directly to changes in your provider state list
+
     final requests = ref.watch(rideRequestsControllerProvider);
-    final driverId = ref.watch(driverControllerProvider)?.driverId;
+    final driverId = ref.watch(driverControllerProvider).driver?.driverId;
 
     if (_isInitLoading) {
       return const Center(child: CircularProgressIndicator());
@@ -45,7 +45,10 @@ class _RideRequestListState extends ConsumerState<RideRequestList> {
       return const Center(
         child: Text(
           "Looking for nearby trips...",
-          style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w500),
+          style: TextStyle(
+            color: Colors.grey, 
+            fontWeight: FontWeight.w500
+          ),
         ),
       );
     }

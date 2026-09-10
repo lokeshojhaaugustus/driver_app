@@ -1,4 +1,3 @@
-// lib/service/MapService.dart
 import 'dart:convert';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
@@ -12,17 +11,17 @@ class RouteData {
 }
 
 class MapService {
+  static const String _apiKey = "AIzaSyA56YKW6VDfc0BBGdH80zxN2JY6R5nrgZk";
+
   static Future<RouteData?> getRoutePoints({
     required LatLng origin,
     required LatLng destination,
   }) async {
-    const apiKey = "AIzaSyA56YKW6VDfc0BBGdH80zxN2JY6R5nrgZk";
-
     final url = "https://maps.googleapis.com/maps/api/directions/json"
         "?origin=${origin.latitude},${origin.longitude}"
         "&destination=${destination.latitude},${destination.longitude}"
         "&mode=driving"
-        "&key=$apiKey";
+        "&key=$_apiKey";
 
     try {
       final response = await http.get(Uri.parse(url));
@@ -32,8 +31,8 @@ class MapService {
       if (data["routes"].isEmpty) return null;
 
       final leg = data["routes"][0]["legs"][0];
-      final distanceText = leg["distance"]["text"]; // e.g. "3.5 km"
-      final durationText = leg["duration"]["text"]; // e.g. "12 mins"
+      final distanceText = leg["distance"]["text"];
+      final durationText = leg["duration"]["text"];
 
       List steps = leg["steps"];
       List<LatLng> routePoints = [];

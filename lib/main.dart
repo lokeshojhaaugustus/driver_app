@@ -2,21 +2,23 @@ import 'package:driver_app/driverprofile/DriverProfileScreen.dart';
 import 'package:driver_app/home/HomeScreen.dart';
 import 'package:driver_app/home/TripUploadScreen.dart';
 import 'package:driver_app/login/LoginScreen.dart';
+import 'package:driver_app/otpLogin/OtpVerificationScreen.dart';
+import 'package:driver_app/otpLogin/PhoneEmailScreen.dart';
 import 'package:driver_app/provider/AppProvider.dart';
 import 'package:driver_app/service/AppInitializer.dart';
 import 'package:driver_app/service/SessionService.dart';
 import 'package:driver_app/signup/SignupScreen.dart';
+import 'package:driver_app/testMap/MapTestScreen.dart';
+import 'package:driver_app/v1/home/HomeScreenTest.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-//allows us to navigate to different screens from anywhere in the app, even outside of the widget tree
-//like a global remote control for navigation
+
 final GlobalKey<NavigatorState> globalNavigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
 
-  //tells the flutter engine to wait until all the
-  //necessary services and resources are initialized before running the app
+  
   WidgetsFlutterBinding.ensureInitialized();
 
 
@@ -48,13 +50,17 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       navigatorKey: globalNavigatorKey, 
-      initialRoute: isLoggedIn ? "/home" : "/login",
+      initialRoute: isLoggedIn ? "/home" : "/initialize",
       routes: {
         "/login": (context) => const LoginScreen(),
         "/signup": (context) => const SignupScreen(),
         "/home": (context) => const HomeScreen(),
         "/profile": (context) => const DriverProfileScreen(),
         "/uploads": (context) => const TripUploadScreen(tripId: 0), // Placeholder tripId, replace with actual logic
+        "/initialize": (context) => const PhoneEmailScreen(),
+        "/verify": (context) => const OtpVerificationScreen(email: "", phone: ""),
+        "/map": (context) => const MapTestScreen(),
+        "/hometest": (context) => const HomeScreenTest()
       },
     );
   }

@@ -1,13 +1,10 @@
-import 'package:driver_app/apiservice/DriverDeviceTokenApiService.dart';
 import 'package:driver_app/apiservice/TripApiService.dart';
 import 'package:driver_app/controller/DriverController.dart';
 import 'package:driver_app/controller/RideRequestController.dart';
 import 'package:driver_app/controller/TripController.dart';
 import 'package:driver_app/provider/AppProvider.dart';
-import 'package:driver_app/service/AppStateService.dart';
 import 'package:driver_app/service/DriverService.dart';
 import 'package:driver_app/service/SharedPreferenceService.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class SessionService{
   
@@ -21,8 +18,8 @@ class SessionService{
     if(driver==null){
       return false;
     }
-    await DriverDeviceTokenApiService.setDeviceToken(driverId);
-    appProviderContainer.read(driverControllerProvider.notifier).state = driver;
+    //await DriverDeviceTokenApiService.setDeviceToken(driverId);
+    appProviderContainer.read(driverControllerProvider.notifier).setDriver(driver);
     await restoreDriverTrip(driverId);
     return true;
   }

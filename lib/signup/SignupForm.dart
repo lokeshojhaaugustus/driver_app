@@ -1,6 +1,10 @@
 import 'dart:io';
-import 'package:driver_app/apiservice/DriverApiService.dart';
+import 'package:driver_app/controller/DriverController.dart';
 import 'package:driver_app/model/Driver.dart';
+import 'package:driver_app/provider/AppProvider.dart';
+import 'package:driver_app/service/DriverService.dart';
+
+import 'package:driver_app/service/SharedPreferenceService.dart';
 import 'package:driver_app/signup/SignupButton.dart';
 import 'package:driver_app/signup/SignupProfileSelector.dart';
 import 'package:driver_app/signup/SignupTextField.dart';
@@ -16,6 +20,8 @@ class SignupForm extends StatefulWidget {
     required this.phoneController,
     required this.passwordController,
     required this.licenceController,
+    this.isPhoneLocked = true, // Defaults to locked
+    this.googleId,
   });
 
   final TextEditingController firstNameController;
@@ -24,6 +30,8 @@ class SignupForm extends StatefulWidget {
   final TextEditingController phoneController;
   final TextEditingController passwordController;
   final TextEditingController licenceController;
+  final bool isPhoneLocked;
+  final String? googleId;
 
   @override
   State<SignupForm> createState() => _SignupFormState();
@@ -31,7 +39,7 @@ class SignupForm extends StatefulWidget {
 
 class _SignupFormState extends State<SignupForm> {
   bool _isLoading = false;
-  File? _profileImage; // Holds the local 1:1 cropped square image file
+  File? _profileImage; 
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +60,7 @@ class _SignupFormState extends State<SignupForm> {
         ),
         child: Column(
           children: [
-            // Reusable Profile Selector with explicit state pass-backs
+            
             SignupProfileSelector(
               selectedImage: _profileImage,
               onImageSelected: (File? file) {
@@ -84,6 +92,7 @@ class _SignupFormState extends State<SignupForm> {
             const SizedBox(height: 16),
             SignupTextField(
               hint: "Email Address",
+              readOnly: true, // Always locked
               isPassword: false,
               keyboardType: TextInputType.emailAddress,
               controller: widget.emailController,
@@ -91,6 +100,7 @@ class _SignupFormState extends State<SignupForm> {
             const SizedBox(height: 16),
             SignupTextField(
               hint: "Phone Number",
+              readOnly: widget.isPhoneLocked,
               isPassword: false,
               keyboardType: TextInputType.phone,
               controller: widget.phoneController,
@@ -112,9 +122,17 @@ class _SignupFormState extends State<SignupForm> {
             _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : SignupButton(
-                    // Inside SignupForm.dart -> Replace your current onSignup logic block:
                     onSignup: () async {
                       if (_isLoading) return;
+
+                      
+                      if (widget.phoneController.text.trim().isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Please enter your phone number.")),
+                        );
+                        return;
+                      }
+
                       setState(() => _isLoading = true);
 
                       try {
@@ -127,27 +145,29 @@ class _SignupFormState extends State<SignupForm> {
                           licenceNumber: widget.licenceController.text.trim(),
                         );
 
-                        // 1. Save text fields to database and grab the unique ID
-                        final int? newDriverId = await DriverApiService.addDriver(driver);
+                        
+                        final int? newDriverId = await DriverService.addDriver(driver, googleId: widget.googleId);
                         if (!context.mounted) return;
 
                         if (newDriverId != null) {
-                          // 2. Upload the cropped picture if they picked one
+                          
                           if (_profileImage != null) {
-                            String? remoteUrl = await DriverApiService.uploadImage(_profileImage!, newDriverId);
-                            
-                            // 3. Cache it locally to app document storage immediately
+                            String? remoteUrl = await DriverService.uploadImage(_profileImage!, newDriverId);
+
                             if (remoteUrl != null) {
                               final directory = await getApplicationDocumentsDirectory();
                               final localPath = '${directory.path}/profile_driver_$newDriverId.jpg';
-                              await _profileImage!.copy(localPath); // Saves it locally as driver_X.jpg
+                              await _profileImage!.copy(localPath);
                             }
                           }
 
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text("Signup Successful!"), backgroundColor: Colors.green),
                           );
-                          Navigator.of(context).pushReplacementNamed("/login");
+                          Driver? driver = await DriverService.find(newDriverId);
+                          await SharedPreferenceService.saveDriverId(driver!.driverId!);
+                          appProviderContainer.read(driverControllerProvider.notifier).setDriver(driver);
+                          Navigator.of(context).pushReplacementNamed("/home");
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text("Registration failed. Please try again."), backgroundColor: Colors.redAccent),
@@ -161,7 +181,7 @@ class _SignupFormState extends State<SignupForm> {
                       } finally {
                         if (mounted) setState(() => _isLoading = false);
                       }
-                    }
+                    },
                   ),
           ],
         ),

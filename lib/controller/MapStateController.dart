@@ -1,18 +1,18 @@
-// lib/controller/MapStateController.dart
 import 'dart:async';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:driver_app/controller/DriverController.dart';
 import 'package:driver_app/controller/TripController.dart';
+import 'package:driver_app/controller/DriverController.dart';
 import 'package:driver_app/location/LocationService.dart';
 import 'package:driver_app/service/AppStateService.dart';
 import 'package:driver_app/service/MapService.dart';
+import 'package:driver_app/service/RouteManager.dart';
 import 'package:driver_app/state/MapDataState.dart';
 import 'package:driver_app/state/TripState.dart';
 import 'package:driver_app/apiservice/DriverCurrentLocationApiService.dart';
+import 'package:driver_app/state/DriverState.dart';
 
 final mapStateControllerProvider = StateNotifierProvider<MapStateController, MapDataState>((ref) {
   return MapStateController(ref);
@@ -22,51 +22,126 @@ class MapStateController extends StateNotifier<MapDataState> {
   final Ref _ref;
   StreamSubscription<Position>? _positionSubscription;
   GoogleMapController? googleMapController;
+  TripState? _lastProcessedTripState;
+
+
+  Timer? _cameraBounceTimer;
+  bool isUserInteracting = false;
+  double currentZoomLevel = 17.0;
 
   MapStateController(this._ref) : super(MapDataState()) {
-    _listenToLocation();
+    _startLiveTracking();
   }
 
-  void _listenToLocation() async {
+  void _startLiveTracking() async {
     bool hasPermission = await LocationService.handlePermission();
     if (!mounted) return;
     
     state = state.copyWith(hasPermission: hasPermission, isCheckingPermission: false);
     if (!hasPermission) return;
 
+  
     _positionSubscription = LocationService.getLiveLocation().listen((Position position) async {
       if (!mounted) return;
 
       final oldPos = state.currentPos;
       final latLng = LatLng(position.latitude, position.longitude);
       
-      // Calculate heading angle dynamically between old and new points
+      final currentTrip = _ref.read(tripControllerProvider);
+      final currentTripState = currentTrip?.tripState;
+      
+
       double bearing = state.bearing;
       if (oldPos != null) {
-        bearing = _calculateBearing(oldPos, latLng);
+        bearing = RouteManager.calculateBearing(oldPos, latLng);
       }
+
 
       state = state.copyWith(currentPos: latLng, bearing: bearing);
       AppStateService.setCurrentDriverLocation(latLng);
 
-      // 🎥 TRACKING CAMERA: Always centers and follows driver smoothly
-      googleMapController?.animateCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(target: latLng, zoom: 16.5, tilt: 0, bearing: 0),
-        ),
-      );
+      final bool isTravelling = currentTripState == TripState.onPickup || 
+                               currentTripState == TripState.onTrip;
 
-      // Send telemetry updates to backend
-      final driverId = _ref.read(driverControllerProvider)?.driverId;
-      if (driverId != null) {
+ 
+      if (isTravelling && googleMapController != null && !isUserInteracting) {
+        googleMapController!.animateCamera(
+          CameraUpdate.newCameraPosition(
+            CameraPosition(target: latLng, zoom: currentZoomLevel, tilt: 30.0, bearing: bearing),
+          ),
+        );
+      } 
+      else if (!isTravelling && googleMapController != null && !isUserInteracting) {
+        googleMapController!.animateCamera(
+          CameraUpdate.newCameraPosition(
+            CameraPosition(target: latLng, zoom: currentZoomLevel, tilt: 0.0, bearing: 0.0),
+          ),
+        );
+      }
+
+      if (isTravelling && state.polylines.isNotEmpty) {
+        try {
+          final activePolyline = state.polylines.firstWhere((p) => p.polylineId.value == "route");
+          List<LatLng> remainingPoints = _trimPassedRoutePoints(activePolyline.points, latLng);
+
+          state = state.copyWith(
+            polylines: {
+              activePolyline.copyWith(pointsParam: remainingPoints),
+            },
+          );
+        } catch (e) {
+          debugPrint("Local route trimming warning: $e");
+        }
+      }
+
+     
+      final driverNotifier = _ref.read(driverControllerProvider);
+      final currentDriver = driverNotifier.driver;
+      if (currentDriver != null && 
+          currentDriver.driverId != null && 
+          currentDriver.driverState == DriverState.online) {
         DriverCurrentLocationApiService.updateLocation(
-          driverId: driverId,
+          driverId: currentDriver.driverId!,
           location: latLng,
         ).catchError((_) {});
       }
 
-      // 🔄 CONTINUOUS UPDATE: Every time the location ticks, redraw the line from current location
-      await updateRoute();
+      if (RouteManager.shouldNetworkRefetch(
+        oldState: _lastProcessedTripState,
+        newState: currentTripState,
+        isPolylineEmpty: state.polylines.isEmpty,
+      )) {
+        _lastProcessedTripState = currentTripState;
+        await updateRoute();
+      }
+    });
+  }
+
+  
+  void handleUserMapInteraction() {
+    isUserInteracting = true;
+    _cameraBounceTimer?.cancel();
+    
+    _cameraBounceTimer = Timer(const Duration(seconds: 3), () {
+      isUserInteracting = false;
+      final currentPos = state.currentPos;
+      final currentTrip = _ref.read(tripControllerProvider);
+      
+      if (currentPos != null && googleMapController != null) {
+        final bool isTravelling = currentTrip?.tripState == TripState.onPickup || 
+                                 currentTrip?.tripState == TripState.onTrip;
+                                 
+        googleMapController!.animateCamera(
+          CameraUpdate.newCameraPosition(
+            CameraPosition(
+              target: currentPos,
+              zoom: currentZoomLevel,
+              tilt: isTravelling ? 30.0 : 0.0,
+              bearing: isTravelling ? state.bearing : 0.0,
+            ),
+          ),
+        );
+      }
     });
   }
 
@@ -76,25 +151,17 @@ class MapStateController extends StateNotifier<MapDataState> {
     final trip = _ref.read(tripControllerProvider);
     final currentPos = state.currentPos;
 
-    // Clear polylines instantly if driver is offline/idle
     if (trip == null || currentPos == null) {
+      state = state.copyWith(polylines: <Polyline>{}, distanceText: "-- km", durationText: "-- mins");
+      return;
+    }
+
+    final destination = RouteManager.getTargetDestination(trip);
+    if (destination == null) {
       state = state.copyWith(polylines: <Polyline>{});
       return;
     }
 
-    LatLng? destination;
-    
-    // Choose destination targets based on precise active state
-    if (trip.tripState == TripState.accepted || trip.tripState == TripState.onPickup) {
-      destination = LatLng(trip.pickupAddress.latitude, trip.pickupAddress.longitude);
-    } else if (trip.tripState == TripState.arrived || trip.tripState == TripState.onTrip) {
-      destination = LatLng(trip.dropAddress.latitude, trip.dropAddress.longitude);
-    } else {
-      state = state.copyWith(polylines: <Polyline>{});
-      return;
-    }
-
-    // Call map engine to fetch lines from moving driver -> static target point
     final routeData = await MapService.getRoutePoints(origin: currentPos, destination: destination);
     if (!mounted || routeData == null) return;
 
@@ -104,7 +171,7 @@ class MapStateController extends StateNotifier<MapDataState> {
       polylines: {
         Polyline(
           polylineId: const PolylineId("route"),
-          points: routeData.points, // Dynamic List<LatLng> path
+          points: routeData.points, 
           width: 5,
           color: const Color(0xFF1E3C72),
           startCap: Cap.roundCap,
@@ -114,21 +181,29 @@ class MapStateController extends StateNotifier<MapDataState> {
     );
   }
 
-  double _calculateBearing(LatLng start, LatLng end) {
-    double lat1 = start.latitude * pi / 180;
-    double lng1 = start.longitude * pi / 180;
-    double lat2 = end.latitude * pi / 180;
-    double lng2 = end.longitude * pi / 180;
-    double dLng = lng2 - lng1;
-    double y = sin(dLng) * cos(lat2);
-    double x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(dLng);
-    double bearing = atan2(y, x);
-    return (bearing * 180 / pi + 360) % 360;
+  List<LatLng> _trimPassedRoutePoints(List<LatLng> originalPoints, LatLng currentPos) {
+    if (originalPoints.length < 2) return originalPoints;
+    int closestIndex = 0;
+    double minDistance = double.maxFinite;
+
+    for (int i = 0; i < originalPoints.length; i++) {
+      double distance = _coordinateDistance(currentPos, originalPoints[i]);
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestIndex = i;
+      }
+    }
+    return originalPoints.sublist(closestIndex);
+  }
+
+  double _coordinateDistance(LatLng p1, LatLng p2) {
+    return (p1.latitude - p2.latitude).abs() + (p1.longitude - p2.longitude).abs();
   }
 
   @override
   void dispose() {
     _positionSubscription?.cancel();
+    _cameraBounceTimer?.cancel();
     googleMapController?.dispose();
     super.dispose();
   }

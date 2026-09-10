@@ -77,7 +77,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                           const SnackBar(content: Text("Invalid Credentials"), backgroundColor: Colors.redAccent),
                         );
                       } else {
-                        ref.read(driverControllerProvider.notifier).state = driver;
+                        ref.read(driverControllerProvider.notifier).setDriver(driver);
                         Navigator.of(context).pushReplacementNamed("/home");
                       }
                     } catch (_) {
@@ -91,7 +91,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                   },
                 ),
             const SizedBox(height: 16),
-            const LoginTextBUttons(),
+            const LoginTextButtons(),
             const SocialButtons(),
           ],
         ),

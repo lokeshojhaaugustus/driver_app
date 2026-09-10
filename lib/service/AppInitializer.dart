@@ -8,7 +8,7 @@ class AppInitializer {
       await Firebase.initializeApp();
       debugPrint("Firebase core initialized successfully.");
       
-      // Reverted: Only passes the navigatorKey now
+      
       await PushNotificationService.initialize(navigatorKey);
       debugPrint("PushNotificationService initialized successfully.");
     } catch(e) {

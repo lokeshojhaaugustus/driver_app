@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 
+
 class SignupButton extends StatelessWidget {
   final VoidCallback onSignup;
-  const SignupButton({super.key, required this.onSignup});
+  const SignupButton({
+    super.key, 
+    required this.onSignup
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +24,14 @@ class SignupButton extends StatelessWidget {
         child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text("Create Account", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+            Text(
+              "Create Account", 
+              style: TextStyle(
+                fontSize: 16, 
+                fontWeight: FontWeight.bold, 
+                letterSpacing: 0.5
+              )
+            ),
             SizedBox(width: 8),
             Icon(Icons.arrow_forward_rounded, size: 18),
           ],

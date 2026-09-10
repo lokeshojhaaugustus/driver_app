@@ -18,7 +18,7 @@ class RideRequestsController extends StateNotifier<List<RideRequest>> {
     await loadRideRequests();
   }
 
-  // ⚡ INJECT NEW NOTIFICATION PACKET INSTANTLY
+  // INJECT NEW NOTIFICATION PACKET INSTANTLY
   void addRideRequest(RideRequest newRequest) {
     // Prevent adding duplicate list items if streams repeat
     if (state.any((item) => item.rideRequestId == newRequest.rideRequestId)) {
@@ -33,7 +33,7 @@ class RideRequestsController extends StateNotifier<List<RideRequest>> {
       return false;
     }
     
-    // 🛡️ FIX: Safe fallback. If it's in the list, use it. 
+    // fallback. If it's in the list, use it. 
     // If it's not (like opening via push notification), pull it directly from the backend's trip response!
     final rideRequest = state.any((item) => item.rideRequestId == rideRequestId)
         ? state.firstWhere((item) => item.rideRequestId == rideRequestId)

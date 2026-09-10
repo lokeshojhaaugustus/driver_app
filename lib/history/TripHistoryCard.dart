@@ -27,7 +27,7 @@ class TripHistoryCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Premium vertical route design indicator
+
               Column(
                 children: [
                   const Icon(Icons.radio_button_checked_rounded, color: Color(0xFF1E3C72), size: 18),
@@ -41,20 +41,20 @@ class TripHistoryCard extends StatelessWidget {
               ),
               const SizedBox(width: 16),
               
-              // Address Details Nodes
+              
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      trip.pickupLocation,
+                      trip.rideRequest.pickupLocation,
                       style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: Colors.black87),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 18),
                     Text(
-                      trip.dropLocation,
+                      trip.rideRequest.dropLocation,
                       style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: Colors.black87),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -63,14 +63,14 @@ class TripHistoryCard extends StatelessWidget {
                 ),
               ),
               
-              // Pay Amount Section
+              
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    "₹${trip.amount.toStringAsFixed(0)}",
+                    "₹${trip.rideRequest.amount.toStringAsFixed(0)}",
                     style: const TextStyle(
-                      color: Color(0xFF2E7D32), // Modern deep material green
+                      color: Color(0xFF2E7D32),
                       fontWeight: FontWeight.bold,
                       fontSize: 18,
                     ),
@@ -97,7 +97,7 @@ class TripHistoryCard extends StatelessWidget {
             child: Divider(color: Color(0xFFF1F5F9), thickness: 1),
           ),
           
-          // Bottom Analytics Stats Line
+          
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -106,7 +106,7 @@ class TripHistoryCard extends StatelessWidget {
                   Icon(Icons.map_outlined, size: 16, color: Colors.grey.shade500),
                   const SizedBox(width: 6),
                   Text(
-                    "${trip.distance} km",
+                    "${trip.rideRequest.distance} km",
                     style: TextStyle(color: Colors.grey.shade600, fontSize: 13, fontWeight: FontWeight.w500),
                   ),
                 ],

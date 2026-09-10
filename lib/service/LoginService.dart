@@ -1,5 +1,4 @@
 import 'package:driver_app/apiservice/DriverApiService.dart';
-import 'package:driver_app/apiservice/DriverDeviceTokenApiService.dart';
 import 'package:driver_app/apiservice/LoginApiService.dart';
 import 'package:driver_app/controller/DriverController.dart';
 import 'package:driver_app/dto/LoginDto.dart';
@@ -21,8 +20,8 @@ class LoginService{
       return null;
     }
     await SharedPreferenceService.saveDriverId(driver.driverId!);
-    await DriverDeviceTokenApiService.setDeviceToken(driver.driverId!);
-    appProviderContainer.read(driverControllerProvider.notifier).state = driver;
+    //await DriverDeviceTokenApiService.setDeviceToken(driver.driverId!);
+    appProviderContainer.read(driverControllerProvider.notifier).setDriver(driver);
     await SessionService.restoreDriverTrip(driver.driverId!);
     return driver;
   }

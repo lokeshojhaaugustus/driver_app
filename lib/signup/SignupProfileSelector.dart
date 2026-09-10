@@ -49,7 +49,7 @@ class _SignupProfileSelectorState extends State<SignupProfileSelector> {
               child: CircleAvatar(
                 radius: 46,
                 backgroundColor: const Color(0xFFF1F5F9),
-                // Seamlessly swap between asset placeholders and newly selected local files
+                
                 backgroundImage: widget.selectedImage != null
                     ? FileImage(widget.selectedImage!) as ImageProvider
                     : const AssetImage("assets/img/defaultdriverpic.JPG"),

@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:driver_app/apiservice/ApiConfig.dart';
-import 'package:driver_app/dto/LoginDto.dart';
 import 'package:driver_app/model/Driver.dart';
 import 'package:driver_app/state/DriverState.dart';
 import 'package:http/http.dart' as http;
@@ -20,22 +19,26 @@ class DriverApiService {
     return null;
   }
 
-  static Future<List<Driver>> getDrivers() async {
-    final response = await http.get(ApiConfig.uri("/driver/get/all"));
+  // static Future<List<Driver>> getDrivers() async {
+  //   final response = await http.get(ApiConfig.uri("/driver/get/all"));
 
-    if (response.statusCode == 200 && response.body.isNotEmpty) {
-      final List data = jsonDecode(response.body);
-      return data.map((item) => Driver.fromJson(item)).toList();
+  //   if (response.statusCode == 200 && response.body.isNotEmpty) {
+  //     final List data = jsonDecode(response.body);
+  //     return data.map((item) => Driver.fromJson(item)).toList();
+  //   }
+  //   return [];
+  // }
+
+
+  static Future<int?> addDriver(Driver driver, String? googleId) async {
+    final Map<String,dynamic> body = driver.toJson();
+    if(googleId!=null && googleId.isNotEmpty){
+      body["googleId"]=googleId;
     }
-    return [];
-  }
-
-
-  static Future<int?> addDriver(Driver driver) async {
     final response = await http.post(
       ApiConfig.uri("/driver/add"),
       headers: ApiConfig.jsonHeaders,
-      body: jsonEncode(driver.toJson()),
+      body: jsonEncode(body),
     );
 
     if (response.statusCode == 200 || response.statusCode == 201) {
@@ -44,10 +47,10 @@ class DriverApiService {
     return null;
   }
 
-  static Future<bool> deleteDriver(int driverId) async {
-    final response = await http.delete(ApiConfig.uri("/driver/delete/$driverId"));
-    return response.statusCode >= 200 && response.statusCode < 300;
-  }
+  // static Future<bool> deleteDriver(int driverId) async {
+  //   final response = await http.delete(ApiConfig.uri("/driver/delete/$driverId"));
+  //   return response.statusCode >= 200 && response.statusCode < 300;
+  // }
 
   static Future<bool> updateDriverState(
       int driverId,

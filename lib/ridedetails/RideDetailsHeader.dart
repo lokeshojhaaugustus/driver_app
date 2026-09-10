@@ -9,7 +9,7 @@ class RideDetailsHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.grey[900], // Premium deep background
+      color: Color(0xFF1E3C72), // Premium deep background
       padding: const EdgeInsets.fromLTRB(4, 48, 16, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

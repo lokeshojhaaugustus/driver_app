@@ -29,7 +29,7 @@ class TotalEarningCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         child: Stack(
           children: [
-            // Elegant background pattern circle decoration
+            
             Positioned(
               right: -30,
               top: -30,
@@ -85,12 +85,8 @@ class TotalEarningCard extends StatelessWidget {
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        //Icon(Icons.check_circle_outline_rounded, color: Colors.greenAccent, size: 14),
                         SizedBox(width: 6),
-                        // Text(
-                        //   //"Fully Synchronized Backend",
-                        //   //style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w500),
-                        // ),
+                        
                       ],
                     ),
                   ),

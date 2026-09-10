@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:driver_app/apiservice/DriverApiService.dart';
 import 'package:driver_app/apiservice/TripApiService.dart';
 import 'package:driver_app/model/Driver.dart';
@@ -6,8 +8,8 @@ import 'package:driver_app/state/DriverState.dart';
 
 class DriverService{
 
-  static Future<int?> addDriver(Driver driver) async{
-    final driverId= await DriverApiService.addDriver(driver);
+  static Future<int?> addDriver(Driver driver, {String? googleId}) async{
+    final driverId= await DriverApiService.addDriver(driver, googleId);
     return driverId;
   }
   
@@ -16,10 +18,10 @@ class DriverService{
     return driver;
   }
 
-  static Future<List<Driver>> findAll() async{
-    final response= DriverApiService.getDrivers();
-    return response;
-  }
+  // static Future<List<Driver>> findAll() async{
+  //   final response= DriverApiService.getDrivers();
+  //   return response;
+  // }
 
   static Future<bool> updateDriverDetails(int driverId, Driver driver) async{
     final response= await DriverApiService.updateDriverDetails(driverId, driver);
@@ -34,5 +36,10 @@ class DriverService{
   static Future<Trip?> getCurrentTrip(int driverId) async{
     final trip= await TripApiService.getCurrentTrip(driverId);
     return trip;
+  }
+
+  static Future<String?> uploadImage(File imageFile, int driverId) async {
+    final remoteUrl = await DriverApiService.uploadImage(imageFile, driverId);
+    return remoteUrl;
   }
 }

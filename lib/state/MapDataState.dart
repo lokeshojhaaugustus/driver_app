@@ -1,4 +1,4 @@
-// lib/state/MapDataState.dart
+
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class MapDataState {
@@ -6,9 +6,9 @@ class MapDataState {
   final bool hasPermission;
   final LatLng? currentPos;
   final Set<Polyline> polylines;
-  final double bearing;         // 🧭 Added back for the Navigation Screen HUD
-  final String distanceText;    // 🛣️ Added back for the Navigation Screen HUD
-  final String durationText;    // ⏱️ Added back for the Navigation Screen HUD
+  final double bearing;
+  final String distanceText;
+  final String durationText;
 
   MapDataState({
     this.isCheckingPermission = true,

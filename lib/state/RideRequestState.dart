@@ -1,1 +1,7 @@
-enum RideRequestState { pending, accepted, completed, cancelled }
+
+enum RideRequestState { 
+  pending,
+  accepted,
+  completed,
+  cancelled
+}

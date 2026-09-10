@@ -18,7 +18,7 @@ class _DriverDetailsScreenState extends ConsumerState<DriverDetailsScreen> {
   bool isEditing = false;
   bool isSaving = false;
 
-  // Local controller states to cleanly handle user modifications before saving
+  
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
 
@@ -30,29 +30,27 @@ class _DriverDetailsScreenState extends ConsumerState<DriverDetailsScreen> {
   }
 
   Future<void> _handleSave() async {
-    final currentDriver = ref.read(driverControllerProvider);
+    final currentDriverState= ref.read(driverControllerProvider);
+    final currentDriver = currentDriverState.driver;
     if (currentDriver == null) return;
 
     setState(() => isSaving = true);
 
     try {
-      // 1. Update the local fields on the current object structure
+      
       currentDriver.firstName = _firstNameController.text.trim();
       currentDriver.lastName = _lastNameController.text.trim();
 
-      // 2. Fire your static service method to update the backend database
-      // Assumes your Driver class has an explicit 'id' or 'driverId' property
+      
       bool isSuccess = await DriverService.updateDriverDetails(
         currentDriver.driverId!, 
         currentDriver,
       );
 
       if (isSuccess) {
-        // 3. Clear and re-inject the state pointer back into Riverpod.
-        // This break forces Riverpod to recognize it as a completely new change, 
-        // causing all listening UI screens (like your HomeScreen Header) to instantly rebuild!
-        ref.read(driverControllerProvider.notifier).state = null; 
-        ref.read(driverControllerProvider.notifier).state = currentDriver;
+        
+        ref.read(driverControllerProvider.notifier).clearDriver();
+        ref.read(driverControllerProvider.notifier).setDriver(currentDriver);
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -83,7 +81,8 @@ class _DriverDetailsScreenState extends ConsumerState<DriverDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final driver = ref.watch(driverControllerProvider);
+    final driverState=ref.watch(driverControllerProvider);
+    final driver = driverState.driver;
 
     if (driver == null) {
       return const Scaffold(
@@ -91,7 +90,7 @@ class _DriverDetailsScreenState extends ConsumerState<DriverDetailsScreen> {
       );
     }
 
-    // Syncing controllers with Riverpod state values once when edit mode opens
+    
     if (!isEditing) {
       _firstNameController.text = driver.firstName;
       _lastNameController.text = driver.lastName;
@@ -145,7 +144,7 @@ class _DriverDetailsScreenState extends ConsumerState<DriverDetailsScreen> {
                     ProfileImageCard(isEditing: isEditing),
                     const SizedBox(height: 30),
                     
-                    // Unified Card Layout for dynamic account details
+                    
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(20),
@@ -187,7 +186,7 @@ class _DriverDetailsScreenState extends ConsumerState<DriverDetailsScreen> {
                           DriverDetailItem(
                             label: "License Registration",
                             icon: Icons.card_membership_rounded,
-                            isEditing: false, // Locked non-editable UI presentation
+                            isEditing: false, 
                             value: driver.licenceNumber,
                           ),
                         ],
@@ -198,7 +197,7 @@ class _DriverDetailsScreenState extends ConsumerState<DriverDetailsScreen> {
                       onLogout: () async {
                         await SessionService.clearSession();
                         if (mounted) {
-                          Navigator.of(context).pushNamedAndRemoveUntil("/login", (route) => false);
+                          Navigator.of(context).pushNamedAndRemoveUntil("/initialize", (route) => false);
                         }
                       },
                     ),

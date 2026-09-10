@@ -22,14 +22,14 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC), // Ultra-clean subtle modern gray background
+      backgroundColor: const Color(0xFFF8FAFC), 
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: Column(
             children: [
-              // Premium Pure Widget Header
+              
               Container(
                 width: double.infinity,
                 height: MediaQuery.of(context).size.height * 0.35,
@@ -57,12 +57,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 24),
                       const Text(
-                        "Welcome Back",
+                        "Welcome!",
                         style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: -0.5),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        "Sign in to access your driver console",
+                        "Sign in to access your driver dashboard",
                         style: TextStyle(fontSize: 15, color: Colors.white.withOpacity(0.7)),
                       ),
                     ],
@@ -70,7 +70,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               
-              // Login Core Form Interface Block
+              
               Transform.translate(
                 offset: const Offset(0, -20),
                 child: LoginForm(

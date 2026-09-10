@@ -10,14 +10,14 @@ class Ridedetailscard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[850], // Dark card surface
+        color: Colors.grey.shade700, 
         borderRadius: BorderRadius.circular(14),
         boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 4))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Timeline Address Layout
+          
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -52,7 +52,7 @@ class Ridedetailscard extends StatelessWidget {
             ],
           ),
           const Divider(height: 24, color: Colors.white10),
-          // Metrics Row
+          
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [

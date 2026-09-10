@@ -23,10 +23,10 @@ class RideDetailsScreen extends StatelessWidget {
       backgroundColor: Colors.grey[200],
       body: Column(
         children: [
-          // Header + Card
+          
           RideDetailsHeader(rideRequest: rideRequest),
 
-          // Map section placeholder
+          
           Expanded(
             child: Container(
               alignment: Alignment.center,
@@ -43,7 +43,7 @@ class RideDetailsScreen extends StatelessWidget {
             ),
           ),
 
-          // Buttons
+          
           RideActionButtons(
             onReject: () {
               onReject();

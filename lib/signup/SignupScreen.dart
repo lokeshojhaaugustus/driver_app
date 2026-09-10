@@ -16,6 +16,33 @@ class _SignupScreenState extends State<SignupScreen> {
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController licenceController = TextEditingController();
 
+  bool _hasPrefilled = false;
+  bool _isPhoneLocked = true;
+
+  String? _googleId;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (!_hasPrefilled) {
+      final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+
+      if (args != null) {
+        emailController.text = args['email'] ?? "";
+        firstNameController.text = args['firstName'] ?? "";
+        lastNameController.text = args['lastName'] ?? "";
+        phoneController.text = args['phone'] ?? "";
+
+        _googleId= args["googleId"];
+
+        
+        _isPhoneLocked = phoneController.text.trim().isNotEmpty;
+      }
+      _hasPrefilled = true; 
+    }
+  }
+
   @override
   void dispose() {
     firstNameController.dispose();
@@ -30,14 +57,13 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC), // Matching modern gray background canvas
+      backgroundColor: const Color(0xFFF8FAFC), 
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: Column(
             children: [
-              // Premium Unified Header Banner Block
               Container(
                 width: double.infinity,
                 height: MediaQuery.of(context).size.height * 0.28,
@@ -76,7 +102,6 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
               ),
               
-              // Smoothly overlapping registration block layout
               Transform.translate(
                 offset: const Offset(0, -20),
                 child: SignupForm(
@@ -86,6 +111,8 @@ class _SignupScreenState extends State<SignupScreen> {
                   phoneController: phoneController,
                   passwordController: passwordController,
                   licenceController: licenceController,
+                  isPhoneLocked: _isPhoneLocked, // Pass lock state
+                  googleId: _googleId,
                 ),
               ),
               const SizedBox(height: 20),

@@ -1,75 +1,33 @@
 import 'package:driver_app/controller/DriverController.dart';
 import 'package:driver_app/controller/TripController.dart';
 import 'package:driver_app/state/DriverState.dart';
-import 'package:driver_app/service/DriverService.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class OnlineOfflineToggle extends ConsumerStatefulWidget {
+class OnlineOfflineToggle extends ConsumerWidget {
   const OnlineOfflineToggle({super.key});
 
-  @override
-  ConsumerState<OnlineOfflineToggle> createState() => _OnlineOfflineToggleState();
-}
-
-class _OnlineOfflineToggleState extends ConsumerState<OnlineOfflineToggle> {
-  bool _isUpdating = false;
-
-  Future<void> toggleStatus(bool value) async {
-    setState(() {
-      _isUpdating = true;
-    });
-
-    try {
-
-      final success =
-          await ref
-              .read(driverControllerProvider.notifier)
-              .updateDriverState(
-                value
-                    ? DriverState.online
-                    : DriverState.offline,
-              );
-
-      if (!success && mounted) {
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              "Unable to update driver state",
-            ),
-          ),
+  Future<void> _toggleStatus(BuildContext context, WidgetRef ref, bool value) async {
+    final success = await ref
+        .read(driverControllerProvider.notifier)
+        .updateDriverState(
+          value ? DriverState.online : DriverState.offline,
         );
-      }
 
-    } catch (_) {
-
-      if (mounted) {
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              "Unable to connect to server",
-            ),
-          ),
-        );
-      }
-
-    } finally {
-
-      if (mounted) {
-
-        setState(() {
-          _isUpdating = false;
-        });
-      }
+    if (!success && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Unable to update driver state. Check your connection."),
+        ),
+      );
     }
   }
 
   @override
-  Widget build(BuildContext context) {
-    final driver = ref.watch(driverControllerProvider);
-    final isOnline = driver?.driverState == DriverState.online;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final driverState = ref.watch(driverControllerProvider);
+    final isOnline = driverState.driver?.driverState == DriverState.online;
+    final isUpdating = driverState.isUpdating;
     final currentTrip = ref.watch(tripControllerProvider);
 
     return Container(
@@ -100,7 +58,9 @@ class _OnlineOfflineToggleState extends ConsumerState<OnlineOfflineToggle> {
               activeTrackColor: Colors.green.shade200,
               inactiveThumbColor: Colors.grey.shade400,
               inactiveTrackColor: Colors.grey.shade300,
-              onChanged: currentTrip != null || _isUpdating ? null : toggleStatus,
+              onChanged: currentTrip != null || isUpdating
+                  ? null
+                  : (val) => _toggleStatus(context, ref, val),
             ),
           ),
         ],

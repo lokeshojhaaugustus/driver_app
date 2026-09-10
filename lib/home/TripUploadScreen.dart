@@ -1,6 +1,6 @@
 // lib/home/TripUploadScreen.dart
 import 'dart:io';
-import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
@@ -81,7 +81,7 @@ class _TripUploadScreenState extends State<TripUploadScreen> {
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('🎉 Documents verified and uploaded successfully!')),
+          const SnackBar(content: Text('Documents verified and uploaded successfully!')),
         );
       } else {
         _showErrorDialog("Server Error", "Failed to update documents on backend server. Try again.");
@@ -116,7 +116,7 @@ class _TripUploadScreenState extends State<TripUploadScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Trip #${widget.tripId} Verification')),
-      // ⚡ FIX 1: Wrap body in a SafeArea to guarantee layout bounds remain true across different screen styles
+      
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -156,13 +156,13 @@ class _TripUploadScreenState extends State<TripUploadScreen> {
                 ),
               const SizedBox(height: 20),
 
-              // ⚡ FIX 2: List container safely structured inside explicit layout boundaries
+              
               Expanded(
                 child: _selectedFiles.isEmpty
                     ? const Center(child: Text("No attachments added yet.", style: TextStyle(color: Colors.grey)))
                     : ListView.builder(
                         itemCount: _selectedFiles.length,
-                        // ⚡ FIX 3: Add properties telling the engine to tightly pack list bounds inside the window frame
+                        
                         shrinkWrap: true, 
                         physics: const ClampingScrollPhysics(),
                         itemBuilder: (context, index) {
@@ -189,7 +189,7 @@ class _TripUploadScreenState extends State<TripUploadScreen> {
 
               const SizedBox(height: 16),
               
-              // Bottom Action button block
+            
               SizedBox(
                 width: double.infinity,
                 height: 55,

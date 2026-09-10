@@ -80,7 +80,7 @@ class TripApiService {
   static Future<bool> completeTrip(int tripId) async {
     final response = await http.put(ApiConfig.uri("/trip/complete/$tripId"));
     
-    print("🌐 Debug API Response: Status Code [${response.statusCode}] | Body: ${response.body}");
+    print("API Response: Status Code [${response.statusCode}] | Body: ${response.body}");
 
     if (response.statusCode == 200) {
       return true;
@@ -93,7 +93,6 @@ class TripApiService {
           throw const HttpException('DOCS_REQUIRED'); 
         }
       } catch (e) {
-        // If it's our target exception, rethrow it so the controller catches it
         if (e is HttpException) rethrow; 
       }
     }
